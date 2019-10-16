@@ -1,0 +1,155 @@
+<?php
+namespace backend\controllers;
+
+use Yii;
+use yii\web\Controller;
+use common\models\Account;
+use common\models\Promotion;
+use common\models\Task;
+use common\models\AccountBalance;
+use common\models\CurrencyPrice;
+use common\models\ETCError;
+
+class PromotionController extends Controller
+{
+	public function beforeAction($action)
+	{            
+
+		$this->enableCsrfValidation = false;
+
+		return parent::beforeAction($action);
+	}
+	public function actionView($id) {
+		
+		$promotion = Promotion::findOne($id);
+		
+		if(isset($_POST['save'])) {
+			$promotion->load($_POST);
+			$promotion->settings = $_POST['settings'];
+			
+			if($promotion->mode == $promotion::MODE_STABILIZE)
+				$promotion->settings['speed'] = 0;
+			
+			$promotion->save();
+		}
+		
+		if(isset($_POST['create_initial_tasks'])) 
+			$promotion->createInitialTasks($_POST['count']);
+			
+		if(isset($_POST['stop'])) 
+			$promotion->stop();
+		
+		if(isset($_POST['start'])) 
+			$promotion->start();
+		
+		return $this->render("view", ['promotion' => $promotion]);
+	}
+	
+	public function actionGraph($id) {
+		\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+		
+		$promotion = Promotion::findOne($id);
+		
+		$name = $promotion->second_currency->symbol.'.'.$promotion->main_currency->symbol;
+		
+		$data = [];
+		foreach(Task::find()->where(['promotion_id'=>$id, 'status'=>2])->andWhere(['sell'=>0])->andWhere(['!=','progress',0])->all() as $t)
+		{
+			$time = floor($t->time/86400)*86400;
+			$data[$time]['value'] += $t->tokens_count * $t->rate;
+			$data[$time]['rate'][] = $t->rate;
+		}
+		
+		foreach(Task::find()->where(['promotion_id'=>$id, 'status'=>4])->andWhere(['sell'=>0])->andWhere(['!=','progress',0])->all() as $t)
+		{
+			$time = floor($t->time/86400)*86400;
+			$data[$time]['value'] += $t->tokens_count * $t->rate * ($t->progress/100);
+			$data[$time]['rate'][] = $t->rate;
+		}
+		
+		
+		foreach($data as $time => $t) {
+			$xSeries[] = $time;
+			$vl[] = (int)$t['value'];
+			
+			$hloc_temp_arr = [];
+			$counter = -1;
+			
+			foreach($t['rate'] as $rate) {
+			$counter++;
+			
+				if($rate > $hloc_temp_arr[0] OR $hloc_temp_arr[0] == 0 )
+					 $hloc_temp_arr[0] = round($rate,2);
+					 
+				if($rate < $hloc_temp_arr[1] OR $hloc_temp_arr[1] == 0 )
+					 $hloc_temp_arr[1] = round($rate,2);
+			}
+			//$hloc_temp_arr[2] = $hloc_temp_arr[0] - (($hloc_temp_arr[0]-$hloc_temp_arr[1])*0.2);
+			//$hloc_temp_arr[3] = $hloc_temp_arr[1] + (($hloc_temp_arr[0]-$hloc_temp_arr[1])*0.2);
+			$hloc_temp_arr[2] = round($t['rate'][0],2);
+			$hloc_temp_arr[3] = round($t['rate'][$counter],2);
+				
+			$hloc[] = $hloc_temp_arr;
+		}
+		
+		$out = [
+			"hloc" => [$name => $hloc],
+			"vl" => [$name => $vl], 
+			"xSeries" => [$name => $xSeries],
+			"info" => [
+				"AAPL.US" => [
+					"id" => $name,
+					"short_name" => "Apple Inc.",
+					"default_ticker" => "AAPL",
+					"nt_ticker" => "AAPL.US",
+					"currency" => "USD",
+					"min_step" => "0.01000000",
+					"lot" => "1.00000000",
+			]]
+		];
+		
+		return $out;
+	}
+	
+	public function actionReport() {
+		$promotion = Promotion::findOne($_GET['id']);
+		
+		$period_stat = [];
+		
+		$start = (((int)(time()/3600))*3600);
+		
+		$accounts = $promotion->accounts;
+		
+		for($i=0;$i<24;$i++) {
+			$start-= 3600;
+			
+			$orders = [];
+			$orders['planned'] = Task::find()->select("SUM(value) AS value")->where(['promotion_id'=>$promotion->id])->andWhere(['sell'=>0])->andWhere(['BETWEEN', 'time', $start, $start+3600])->scalar();
+			$orders['created'] = Task::find()->select("SUM(value) AS value")->where(['promotion_id'=>$promotion->id])->andWhere(['sell'=>0])->andWhere(['!=','status', 1])->andWhere(['!=','status', 3])->andWhere(['BETWEEN', 'time', $start, $start+3600])->scalar();
+			
+			foreach(Task::find()->where(['promotion_id'=>$promotion->id, 'status'=>2])->andWhere(['!=','progress',0])->andWhere(['sell'=>0])->andWhere(['BETWEEN', 'time', $start, $start+3600])->all() as $t)
+				$orders['succesfull']+= $t->value;
+		
+			foreach(Task::find()->where(['promotion_id'=>$promotion->id, 'status'=>4])->andWhere(['!=','progress',0])->andWhere(['sell'=>0])->andWhere(['BETWEEN', 'time', $start, $start+3600])->all() as $t)
+				$orders['succesfull']+= $t->value * ($t->progress/100);
+
+			foreach($accounts as $account) {
+				foreach(AccountBalance::find()->where(['account_id'=>$account->id])->andWhere(['BETWEEN', 'loaded_at', $start+3600, $start+3900])->all() as $b) {
+					if($b->currency_two ==0 OR $b->currency_two == $promotion->currency_two)
+					$orders['balances'][$b->currency_id][$b->type]+= $b->value;
+				}
+			}
+			
+			$currency = CurrencyPrice::find()->where(['currency_one' => $promotion->currency_one , 'currency_two' => $promotion->currency_two])->andWhere(['BETWEEN', 'created_at', $start+3600, $start+3900])->one();
+			$orders['price'] = ($currency->buy_price+$currency->sell_price)/2;
+			
+			$period_stat[] = [
+				'start' => $start,
+				'orders' => $orders,
+				'balances' => []
+			];
+		}
+		
+		return $this->render("report", ['period_stat'=>$period_stat]);
+	}
+}

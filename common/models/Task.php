@@ -1,0 +1,351 @@
+<?php
+
+namespace common\models;
+
+use Yii;
+use common\components\ApiRequest;
+
+/**
+ * This is the model class for table "task".
+ *
+ * @property int $id
+ * @property int $promotion_id
+ * @property int $account_id
+ * @property int $status
+ * @property int $sell
+ * @property int $value
+ * @property double $random_curve
+ * @property string $tokens_count
+ * @property string $rate
+ * @property int $progress
+ * @property string $data_json
+ * @property int $time
+ * @property int $created_at
+ * @property int $loaded_at
+ */
+class Task extends \yii\db\ActiveRecord
+{
+    /**
+     * {@inheritdoc}
+     */
+    public static function tableName()
+    {
+        return 'task';
+    }
+	
+	const STATUS_NEW = 0;
+	const STATUS_STARTED = 1;
+	const STATUS_CREATED = 2;
+	const STATUS_PRICE_ERROR = 3;
+	const STATUS_CANCELED = 4;
+	const STATUS_ACCOUNT_NOT_FOUND = 11;
+	
+	
+	public static $statuses = [
+		self::STATUS_NEW => 'new',
+		self::STATUS_STARTED => 'error',
+		self::STATUS_CREATED => 'created',
+		self::STATUS_PRICE_ERROR => 'price error',
+		self::STATUS_CANCELED => 'canceled by system',
+		self::STATUS_ACCOUNT_NOT_FOUND => 'account not found',
+	];
+	
+	const MODE_STABILIZE = 0;
+	const MODE_INCREASE = 1;
+	const MODE_DECREASE = 2;
+	const MODE_PASSIVE = 3;
+	
+	public static $modes = [
+		self::MODE_STABILIZE => 'stabilize price',
+		self::MODE_INCREASE => 'increase price',
+		self::MODE_DECREASE => 'decrease price',
+		self::MODE_PASSIVE => 'passive mode'
+	];
+	
+    /**
+     * {@inheritdoc}
+     */
+    public function rules()
+    {
+        return [
+            [['promotion_id',  'value', 'random_curve', 'time'], 'required'],
+            [['promotion_id', 'account_id', 'status', 'sell', 'value', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
+            [['random_curve', 'tokens_count', 'rate'], 'number'],
+            [['data_json'], 'string'],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'promotion_id' => 'Promotion ID',
+            'account_id' => 'Account ID',
+            'status' => 'Status',
+            'sell' => 'Sell',
+            'value' => 'Value',
+            'random_curve' => 'Random Curve',
+            'tokens_count' => 'Tokens Count',
+            'rate' => 'Rate',
+            'progress' => 'Progress',
+            'data_json' => 'Data Json',
+            'time' => 'Time',
+            'created_at' => 'Created At',
+            'loaded_at' => 'Loaded At',
+        ];
+    }
+	
+	
+	public function make() {
+		$this->status = self::STATUS_STARTED;
+	
+		$promotion = $this->promotion;
+		if($promotion->enabled == 0)
+			return false;
+			
+		$this->save();
+		
+		if(!$this->calculateRate())
+		{
+			$this->status = self::STATUS_PRICE_ERROR;
+			$this->save();
+			return false;
+		}
+		
+		$tokens_count = round($this->value/$this->rate, 1);
+		
+		if($this->sell == 1 AND (int)$promotion->settings['fixed_tasks_currency_two']!=0) {
+			$tokens_count = $promotion->settings['fixed_tasks_currency_two'];
+		}
+		
+		if($promotion->settings['calculate_account']!=1)
+			$account = $this->promotion->accounts[array_rand($this->promotion->accounts,1)];
+		else
+		{
+			if(!$account = $promotion->calculateAccount())
+			{
+				$this->status = self::STATUS_ACCOUNT_NOT_FOUND;
+				$this->save();
+				return false;
+			}
+		}
+			
+		$this->account_id = $account->id;
+		
+		$this->tokens_count = $tokens_count;
+		
+
+		$result = ApiRequest::accounts('v1/orders/create', 
+			[
+			'sell'=>$this->sell,
+			'market_id'=>$promotion->market_id,
+			'currency_one'=>$promotion->currency_one, 
+			'currency_two' => $promotion->currency_two, 
+			'account_id' => $this->account_id,
+			'tokens_count' => $this->tokens_count,
+			'rate' => $this->rate,
+			]);
+
+		
+		if($result->status) {
+			$this->status = self::STATUS_CREATED;
+			$this->progress = 100;
+			$this->created_at = time();
+		}
+			
+		$this->save();
+	}
+	
+	public function calculateRate() {
+		$promotion = $this->promotion;
+		
+		if(!$price = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two))
+			return false;
+		
+		//if(!$price = CurrencyPrice::currentPrice(1, $promotion->currency_one, $promotion->currency_two))
+		//		return false;
+		
+		$timeout = 900;
+		
+		if($promotion->market_id==2)
+			$timeout = 10000;
+		
+		if(time() - $price->created_at > $timeout)
+			return false;
+			
+		
+		$random_rate = 1;
+		if(rand(0,2) != 0)
+			$random_rate = ((100 + $this->random_curve) / 100);
+				
+		if($promotion->mode == Promotion::MODE_FAST_VOLUME) {
+			$this->rate = ($price->buy_price + $price->sell_price)/2;
+			$temp_rate = $this->rate * $random_rate;
+			
+			if($temp_rate > $price->buy_price AND $temp_rate < $price->sell_price)
+				$this->rate = $temp_rate;
+		}
+		else if($promotion->mode == Promotion::MODE_USER_SIMULATOR) {
+			if($this->sell == 1)
+				$this->rate = $price->buy_price;
+			else
+				$this->rate = $price->sell_price;
+		}
+		else if($promotion->mode == Promotion::MODE_INCREASE || $promotion->mode == Promotion::MODE_STABILIZE){
+			
+			
+			$temp_rate = $promotion->settings['price_threshold'] * $random_rate * ((100+ ( ((time() - $promotion->started_at)/(3600*24))*$promotion->settings['speed'] ) )/100);
+			
+			if($this->sell == 1) {
+				// if our price lower than market price - sell on avg makret price
+				if($temp_rate < $price->sell_price) 
+					$this->rate = $price->sell_price - 0.0001;
+				
+				else if($temp_rate*((100 - $promotion->settings['price_stabilize_power'])/100) > $price->sell_price)
+					$this->rate = $temp_rate*((100 - $promotion->settings['price_stabilize_power'])/100);
+				else
+					$this->rate = $price->sell_price;
+
+			} else {	
+				// if buy price more than market price - set price equal to sell price
+				if($temp_rate >= $price->sell_price)
+					$this->rate = $price->sell_price;
+				else
+					$this->rate = $temp_rate;
+			}
+			
+		}
+		else if($promotion->mode == Promotion::MODE_VOLUME_INCREASE){
+			$small_difference = 0.0001;
+			if($this->rate<0.01)
+				$small_difference = 0.000001;
+			
+		
+			if($this->sell == 1)
+				$this->rate = $price->sell_price - $small_difference;
+			else
+				$this->rate = $price->buy_price + $small_difference;
+		}
+		else if($promotion->mode == Promotion::MODE_JUST_BUY){
+			$this->rate = $price->buy_price + (rand(1,10)/10);
+		}
+		else if($promotion->mode == Promotion::MODE_PERCENT_EARN || $promotion->mode == Promotion::MODE_SAFE_EXIT){
+			$small_difference = 0.0001;
+			if($this->rate<0.01)
+				$small_difference = 0.000001;
+				
+			
+			$sell_rate = 1 + ($promotion->settings['earn_percent']/100);
+			$buy_rate  = 1 - ($promotion->settings['earn_percent']/100);
+				
+			$rand_again = rand(0,10);
+			
+			if(!$currency = CurrencyPrice::find()->where(['currency_one' => $promotion->currency_one , 'currency_two' => $promotion->currency_two])->andWhere(['BETWEEN', 'created_at', time() - 3000, time() - 2000])->one())
+				return false;
+					
+			if($this->sell == 1) {
+				$this->rate = $price->buy_price*$sell_rate < $price->sell_price - $small_difference ? $price->sell_price - $small_difference : $price->buy_price*$sell_rate;
+			
+				$difference = $currency->sell_price - $this->rate;
+				if($difference/$currency->sell_price > 0.08)
+					return false;
+					
+				if($rand_again == 1)
+					$this->rate*= 1.03;
+				if($rand_again == 0)
+					$this->rate*= 0.995;
+			}
+			else {
+				$this->rate = $price->sell_price*$buy_rate > $price->buy_price + $small_difference ? $price->buy_price + $small_difference : $price->sell_price*$buy_rate;
+				
+				$difference = $this->rate - $currency->buy_price;
+				if($difference/$currency->buy_price > 0.08)
+					return false;
+					
+				if($rand_again == 1)
+					$this->rate*= 0.98;
+				if($rand_again == 0)
+					$this->rate*= 1.005;
+			}
+		}
+		else if($promotion->mode == Promotion::MODE_FAST_EARN) {
+			$small_difference = 0.0001;
+			if($this->rate<0.01)
+				$small_difference = 0.000001;
+				
+			$small_rand = (rand(0,40)-20)/10000;
+			
+			$sell_rate = 1 + ($promotion->settings['earn_percent']/100);
+			$buy_rate  = 1 - ($promotion->settings['earn_percent']/100);
+			
+			$sell_rate+= $small_rand;
+			$buy_rate+= $small_rand;
+			
+			
+			if(!$currency = CurrencyPrice::find()->where(['currency_one' => $promotion->currency_one , 'currency_two' => $promotion->currency_two])->andWhere(['BETWEEN', 'created_at', time() - 3000, time() - 2000])->one())
+				return false;
+					
+			if($this->sell == 1) {
+				$this->rate = $price->buy_price*$sell_rate < $price->sell_price - $small_difference ? $price->sell_price - $small_difference : $price->buy_price*$sell_rate;
+			
+				$difference = $currency->sell_price - $this->rate;
+				if($difference/$currency->sell_price > 0.08)
+					return false;
+			}
+			else {
+				$this->rate = $price->sell_price*$buy_rate > $price->buy_price + $small_difference ? $price->buy_price + $small_difference : $price->sell_price*$buy_rate;
+				
+				$difference = $this->rate - $currency->buy_price;
+				if($difference/$currency->buy_price > 0.08)
+					return false;
+			}
+		}
+		else if($promotion->mode == Promotion::MODE_PUMP_DUMP) {
+		
+			$increase_rate = ((100+ ( ((time() - $promotion->started_at)/(3600*24))*$promotion->speed ) )/100);
+			$random_pump_dupm = rand(0,40)/1000;
+			
+			if($this->sell == 1)
+				$this->rate = $price->buy_price * $increase_rate * (1 - $random_pump_dupm);
+			else
+				$this->rate = $price->sell_price * $increase_rate * (1 + $random_pump_dupm);
+		}
+	
+		$this->rate = round($this->rate,5);
+		
+		return true;
+	}
+	
+	public function cancelOrder() {
+		$exchanger = '\\common\\components\\TronscanExchange';
+		//echo 'cancel-order';
+		
+		$result = $exchanger::cancelOrder($this->account, $this);
+			
+		if($result) {
+			$this->status = self::STATUS_CANCELED;
+			$this->save();
+		}
+	}
+	
+	public function getPromotion() {
+		return $this->hasOne(Promotion::className(), ['id'=>'promotion_id']);
+	}
+	
+	public function getAccount() {
+		return $this->hasOne(Account::className(), ['id'=>'account_id']);
+	}
+	
+	public function getData($assoc = true)
+    {
+        return json_decode($this->data_json,$assoc);
+    }
+	 
+    public function setData($data)
+    {
+        $this->data_json = json_encode($data);
+    }
+}

@@ -1,0 +1,69 @@
+<?php
+
+namespace common\models;
+
+use Yii;
+
+/**
+ * This is the model class for table "currency_price".
+ *
+ * @property int $id
+ * @property int $currency_one
+ * @property int $currency_two
+ * @property int $platform_id
+ * @property string $buy_price
+ * @property string $sell_price
+ * @property int $created_at
+ */
+class CurrencyPrice extends \yii\db\ActiveRecord
+{
+    /**
+     * @inheritdoc
+     */
+    public static function tableName()
+    {
+        return 'currency_price';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function rules()
+    {
+        return [
+            [['currency_one', 'currency_two', 'market_id', 'buy_price', 'sell_price', 'created_at'], 'required'],
+            [['currency_one', 'currency_two', 'market_id', 'created_at'], 'integer'],
+            [['buy_price', 'sell_price'], 'number'],
+        ];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'currency_one' => 'Currency One',
+            'currency_two' => 'Currency Two',
+            'market_id' => 'Market ID',
+            'buy_price' => 'Buy Price',
+            'sell_price' => 'Sell Price',
+            'created_at' => 'Created At',
+        ];
+    }
+	
+	public static function avgPrice($market_id, $currency_one, $currency_two) {
+	
+		$data = self::find()->where(['market_id'=>$market_id, 'currency_one'=>$currency_one, 'currency_two'=>$currency_two])->orderBy("id DESC")->one();
+		
+		if(time() - $data->created_at > 900)
+			return 0;
+		
+		return ($data->buy_price + $data->sell_price)/2;
+	}
+	
+	public static function currentPrice($market_id, $currency_one, $currency_two) {
+		return self::find()->where(['market_id'=>$market_id, 'currency_one'=>$currency_one, 'currency_two'=>$currency_two])->orderBy("id DESC")->one();
+	}
+}
