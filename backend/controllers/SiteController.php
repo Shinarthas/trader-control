@@ -18,12 +18,15 @@ class SiteController extends Controller
 {
 
 	public function beforeAction($action)
-	{   
+	{            
+		if (Yii::$app->user->isGuest AND $this->action->id!="login") {
+            return $this->redirect("/site/login");
+        }
+		
 		$this->enableCsrfValidation = false;
 
 		return parent::beforeAction($action);
 	}
-	
     /**
      * {@inheritdoc}
      */
@@ -55,6 +58,9 @@ class SiteController extends Controller
      */
     public function actionLogin()
     {
+	
+		$this->layout = "simple";
+		
         if (!Yii::$app->user->isGuest) {
             return $this->goHome();
         }

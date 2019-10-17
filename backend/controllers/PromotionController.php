@@ -14,11 +14,15 @@ class PromotionController extends Controller
 {
 	public function beforeAction($action)
 	{            
-
+		if (Yii::$app->user->isGuest) {
+            return $this->redirect("/site/login");
+        }
+		
 		$this->enableCsrfValidation = false;
 
 		return parent::beforeAction($action);
 	}
+	
 	public function actionView($id) {
 		
 		$promotion = Promotion::findOne($id);

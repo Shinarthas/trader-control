@@ -10,7 +10,17 @@ use common\models\Market;
  */
 class MarketController extends Controller
 {
+	public function beforeAction($action)
+	{            
+		if (Yii::$app->user->isGuest) {
+            return $this->redirect("/site/login");
+        }
+		
+		$this->enableCsrfValidation = false;
 
+		return parent::beforeAction($action);
+	}
+	
     public function actionView($id)
     {
 		$market = Market::find()->where(['id'=>$id])->with('promotions')->one();;
