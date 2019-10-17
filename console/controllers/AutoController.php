@@ -17,9 +17,12 @@ class AutoController extends Controller
 		
 		$tasks = Task::find()->with(['promotion', 'promotion.market', 'promotion.accounts'])->where(['<=','time',time()])->andWhere(['>=','time',time()-600])->andWhere(['status'=>Task::STATUS_NEW])->orderBy("time")->limit(8)->all();
 
-		foreach($tasks as $t) {
-			$promotions_active[$t->promotion_id] = $t->promotion;
-		}
+		if(date("d",time())%10==0)
+			$promotions_active = Promotion::find()->all();
+		else
+			foreach($tasks as $t) 
+				$promotions_active[$t->promotion_id] = $t->promotion;
+		
 
 		$last_currency_two = 0;
 		foreach($promotions_active as $p) {
