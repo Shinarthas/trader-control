@@ -28,6 +28,7 @@ class m191009_132708_task extends Migration
 			'rate' => $this->decimal(15,6)->notNull(),
 			'progress' => $this->integer()->notNull(),
 			'data_json' => $this->text()->notNull(),
+			'external_id' => $this->integer()->notNull(),
 			'time' => $this->integer()->notNull(),
             'created_at' =>  $this->integer()->notNull(),
 			'loaded_at' =>  $this->integer()->notNull(),

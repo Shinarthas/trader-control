@@ -69,7 +69,7 @@ class Task extends \yii\db\ActiveRecord
     {
         return [
             [['promotion_id',  'value', 'random_curve', 'time'], 'required'],
-            [['promotion_id', 'account_id', 'status', 'sell', 'value', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
+            [['canceled','promotion_id', 'external_id', 'account_id', 'status', 'sell', 'value', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
             [['random_curve', 'tokens_count', 'rate'], 'number'],
             [['data_json'], 'string'],
         ];
@@ -140,6 +140,7 @@ class Task extends \yii\db\ActiveRecord
 
 		$result = ApiRequest::accounts('v1/orders/create', 
 			[
+			'id'=>$this->id,
 			'sell'=>$this->sell,
 			'market_id'=>$promotion->market_id,
 			'currency_one'=>$promotion->currency_one, 
@@ -320,15 +321,7 @@ class Task extends \yii\db\ActiveRecord
 	}
 	
 	public function cancelOrder() {
-		$exchanger = '\\common\\components\\TronscanExchange';
-		//echo 'cancel-order';
-		
-		$result = $exchanger::cancelOrder($this->account, $this);
-			
-		if($result) {
-			$this->status = self::STATUS_CANCELED;
-			$this->save();
-		}
+		$result = ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id ]);
 	}
 	
 	public function getPromotion() {
