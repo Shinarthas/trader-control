@@ -321,7 +321,9 @@ class Task extends \yii\db\ActiveRecord
 	}
 	
 	public function cancelOrder() {
-		$result = ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id ]);
+		$this->canceled = 1;
+		$this->save();
+		return ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id ]);
 	}
 	
 	public function getPromotion() {

@@ -40,7 +40,7 @@ class AutoController extends Controller
 	}
 	
 	public function actionMakeTask() {
-		$task = Task::findOne(139);
+		$task = Task::findOne(167);
 		$task->make();
 	}
 	
@@ -55,5 +55,25 @@ class AutoController extends Controller
 					$promotion->createDayTasks(time());
 			}
 		}
+	}
+	
+	public function actionCalcProgress() {
+
+		if(date("i", time()) == 20 OR date("i", time()) == 40)
+			$promotions = Promotion::find()->where(['enabled'=>1, 'mode'=>Promotion::MODE_FAST_EARN])->all();
+		else
+			$promotions = Promotion::find()->where(['enabled'=>1])->all();
+		
+		foreach($promotions as $promotion) {
+			if($promotion->settings['disable_balance_check']==1)
+				continue;
+				
+			$promotion->clearOldOrders();
+		}
+	}
+	
+	public function actionCancelOrder() {
+		$task = Task::findOne(167);
+		$task->cancelOrder();
 	}
 }
