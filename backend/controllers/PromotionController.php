@@ -9,6 +9,7 @@ use common\models\Task;
 use common\models\AccountBalance;
 use common\models\CurrencyPrice;
 use common\models\ETCError;
+use common\models\PromotionAccount;
 
 class PromotionController extends Controller
 {
@@ -155,5 +156,67 @@ class PromotionController extends Controller
 		}
 		
 		return $this->render("report", ['period_stat'=>$period_stat]);
+	}
+	
+	public function actionAccounts() {
+		$promotion = Promotion::findOne($_GET['id']);
+		
+		$p_a = [];
+		foreach($promotion->promotionAccounts as $a)
+			$p_a[] = $a->account_id;
+		
+		
+		if(isset($_POST['save'])) {
+			foreach($_POST['account'] as $k=>$v) {
+				if($v==1) {
+					if(in_array($k, $p_a))
+						continue;
+					$p_a_new = new PromotionAccount;
+					$p_a_new->promotion_id = $promotion->id;
+					$p_a_new->account_id = $k;
+					$p_a_new->created_at = time();
+					$p_a_new->save();
+				}
+				else {
+					if(!in_array($k, $p_a))
+						continue;
+					$p_a_for_delete = PromotionAccount::find()->where(['promotion_id'=>$promotion->id, 'account_id'=>$k])->one();
+					$p_a_for_delete->delete();
+				}
+			}
+			
+			$p_a = [];
+			$promotion = Promotion::findOne($_GET['id']);
+			foreach($promotion->promotionAccounts as $a)
+				$p_a[] = $a->account_id;
+		}
+		
+		
+		$accounts = Account::find()->all();
+		
+		return $this->render("accounts", ['promotion'=>$promotion, 'p_a'=>$p_a, 'accounts'=>$accounts]);
+	}
+	
+	public function actionAdd() {
+		$promotion = new Promotion;
+		$promotion->market_id = $_GET['market'];
+		
+		if(isset($_POST['save'])) {
+			$promotion->load($_POST);
+			$promotion->settings = $_POST['settings'];
+			$promotion->created_at = time();
+			$promotion->currency_one = 1;
+			
+			if($promotion->mode == $promotion::MODE_STABILIZE)
+				$promotion->settings['speed'] = 0;
+			
+			if($promotion->save())
+				return $this->redirect("/market/". $_GET['market']);		
+				
+				
+			echo "<pre>";print_r($promotion);exit();
+		}
+		
+		return $this->render("view", ['promotion' => $promotion]);
 	}
 }

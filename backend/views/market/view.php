@@ -6,6 +6,8 @@
 				</div>
 			</div>		
 
+
+<a style="position:absolute;left:864px;top:12px;" href="/promotion/add?market=<?=$market->id;?>"><input type="submit" value="+" style="margin:0;"></a>
 		<h3 style="text-align:left;padding:15px 30px 0 ;font-size:28px;color: #ffffffdf;"><?=$market->name?> promotions:</h3>
 
 			<div style="width:724px;" class="list">

@@ -195,6 +195,12 @@ AppAsset::register($this);
 			padding:8px 20px;
 		}
 
+		input[type=checkbox] {
+			height: 15px;
+			width: 15px;
+			line-height:15px;
+			vertical-align:middle;
+		}
 	</style>
 </head>
 <body>
@@ -205,8 +211,8 @@ AppAsset::register($this);
 	<div class="container">
 		<div class="menu">
 			<a href="/">Home</a>
-			<a>Markets</a>
-			<a>Accounts</a>
+			<a href="/">Markets</a>
+			<a href="/account">Accounts</a>
 			<a>Statistic</a>
 			<a>Settings</a>
 			<a>Help</a>

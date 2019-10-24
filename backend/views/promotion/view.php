@@ -28,7 +28,7 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 
 ?>
 
-<font>Accounts: <?=count($promotion->accounts);?></font>
+<font>Accounts: <?=count($promotion->accounts);?></font> <a href="/promotion/<?=$promotion->id;?>/accounts">Edit</a> <a href="/market/<?=$promotion->market->id;?>">Back to market</a>
 
 
 	<br>
@@ -41,6 +41,7 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 <h3></h3>
 
 <form method="POST">
+	<p>Name: <input name="Promotion[name]" value="<?=$promotion->name;?>"></p>
 	<p>Hour volume: <input name="settings[hour_volume]" value="<?=$promotion->settings['hour_volume'];?>"> <?=$promotion->main_currency->symbol;?></p>
 
 	<p>mode: <select  name="Promotion[mode]"><? foreach($promotion::$modes as $value=>$mode) { $selected = ""; if($value == $promotion->mode) {$selected = "selected";}  echo "<option value='".$value."' ".$selected.">".$mode."</option>";}?></select></p>

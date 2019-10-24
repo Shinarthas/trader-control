@@ -42,6 +42,7 @@ return [
             'showScriptName' => false,
             'rules' => [
 				'/<controller>/<id:\d+>' => '<controller>/view',
+				'/<controller>/<id:\d+>/<action>' => '<controller>/<action>',
             ],
         ],
     ],
