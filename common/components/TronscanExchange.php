@@ -38,7 +38,7 @@ class TronscanExchange {
 			ETC::decTo64bitHex($rate)
 		];
 		
-		print_r($parameters);
+	//	print_r($parameters);
 		
 		return ETC::triggerContract(self::CONTRACT_ADDRESS, 0, $function, $parameters, $account->data, $proxy, 1);
 	}
