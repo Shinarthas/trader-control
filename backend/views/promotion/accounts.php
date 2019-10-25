@@ -13,7 +13,7 @@
 <? foreach($accounts as $a):?>
 <div>
 <input type="hidden" name="account[<?=$a->id;?>]" value=0>
-<input type="checkbox" <? if(in_array($a->id, $p_a)) { echo "checked";}?> name="account[<?=$a->id;?>]" value=1> <?=$a->id;?> <?=$a->name;?>
+<input type="checkbox" <? if(in_array($a->id, $p_a)) { echo "checked";}?> name="account[<?=$a->id;?>]" value=1> <?=$a->id;?> <?=$a->label;?>
 
 </div>
 <? endforeach;?>
