@@ -35,6 +35,7 @@ class AccountController extends Controller
 			$a->id = $res->data->account_id;
 			$a->name = $_POST['name'];
 			$a->type = $_POST['type'];
+			$a->label = $_POST['label'];
 			$a->save();
 			return $this->redirect("/account/");
 		}

@@ -9,6 +9,7 @@
 
 <form method="POST">
 	<p>Account type: <select name="type"><option value="1">TRX Account</option></select></p>
+	<p>Account label: <input name="label"></p>
 	<p>Account name: <input name="name"></p>
 	<p>Account password: <input name="password"></p>
 	<input type="submit" value="add" name="add">

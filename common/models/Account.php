@@ -29,7 +29,7 @@ class Account extends \yii\db\ActiveRecord
         return [
             [['type', 'name'], 'required'],
             [['type'], 'integer'],
-            [['name'], 'string', 'max' => 255],
+            [['name','label'], 'string', 'max' => 255],
         ];
     }
 
