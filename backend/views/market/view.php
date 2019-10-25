@@ -18,7 +18,8 @@
 						<a href="/promotion/<?=$p->id;?>"><?=$p->name;?></a>
 						
 						<p style="float:right; display:inline-block;width:60px;text-align:right;font-size:13px;line-height:20px;"><?=date("M d",$p->created_at);?></p>
-						<p style="float:right; font-size:13px;line-height:20px;opacity:0.3;">25'666$<span style="margin-left:10px;">+1.5%</span></p>
+						<p style="float:right; font-size:13px;line-height:20px;opacity:0.3;"><?=$p::$modes[$p->mode];?></p>
+					<?/*	<p style="float:right; font-size:13px;line-height:20px;opacity:0.3;">25'666$<span style="margin-left:10px;">+1.5%</span></p>*/?>
 					</div>
 				<? endforeach;?>
 			</div>
