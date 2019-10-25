@@ -1,6 +1,6 @@
 
 
 <div>
-<?=$account->id;?> <?=$account->name;?>
+<?=$account->id;?> <?=$account->label;?>
 
 </div>
