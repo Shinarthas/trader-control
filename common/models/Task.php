@@ -181,7 +181,7 @@ class Task extends \yii\db\ActiveRecord
 		$random_rate = 1;
 		if(rand(0,2) != 0)
 			$random_rate = ((100 + $this->random_curve) / 100);
-				
+
 		if($promotion->mode == Promotion::MODE_FAST_VOLUME) {
 			$this->rate = ($price->buy_price + $price->sell_price)/2;
 			$temp_rate = $this->rate * $random_rate;
@@ -306,7 +306,7 @@ class Task extends \yii\db\ActiveRecord
 		}
 		else if($promotion->mode == Promotion::MODE_PUMP_DUMP) {
 		
-			$increase_rate = ((100+ ( ((time() - $promotion->started_at)/(3600*24))*$promotion->speed ) )/100);
+			$increase_rate = ((100+ ( ((time() - $promotion->started_at)/(3600*24))*$promotion->settings['speed'] ) )/100);
 			$random_pump_dupm = rand(0,40)/1000;
 			
 			if($this->sell == 1)
