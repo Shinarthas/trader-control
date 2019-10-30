@@ -158,6 +158,8 @@ class Task extends \yii\db\ActiveRecord
 		}
 			
 		$this->save();
+		
+		return $result;
 	}
 	
 	public function calculateRate() {

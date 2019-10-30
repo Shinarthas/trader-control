@@ -206,7 +206,7 @@ class Promotion extends \yii\db\ActiveRecord
 			return $this->newClearOrders();
 		}
 		
-		$count_tasks_limits = preg_split('|\-|',Promotion::$frequency_variants[$this->frequency]);
+		$count_tasks_limits = preg_split('|\-|',Promotion::$frequency_variants[$this->settings['frequency']]);
 		$orders_limit = $count_tasks_limits[1];
 		
 		if($orders_limit == 0)
