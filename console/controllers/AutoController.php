@@ -45,6 +45,11 @@ class AutoController extends Controller
 		print_r($r);
 	}
 	
+	public function actionCheckPrice($id) {
+		$p = Promotion::findOne($id);
+		$p->checkPrice();
+	}
+	
 	public function actionCreateHourTasks() {
 		foreach(Promotion::find()->where(['enabled'=>1])->all() as $promotion)
 		{

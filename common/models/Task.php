@@ -115,6 +115,9 @@ class Task extends \yii\db\ActiveRecord
 			return false;
 		}
 		
+		if($promotion->market_id==4)
+			$this->rate = round($this->rate,2);
+		
 		$tokens_count = round($this->value/$this->rate, 1);
 		
 		if($this->sell == 1 AND (int)$promotion->settings['fixed_tasks_currency_two']!=0) {

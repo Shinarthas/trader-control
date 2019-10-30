@@ -261,7 +261,7 @@ class Promotion extends \yii\db\ActiveRecord
 	}
 	
 	public function checkPrice() {
-		$exchanger = '\\common\\components\\TronscanExchange';
+		$exchanger = '\\common\\components\\' .$this->market->class;
 		
 		$data = $exchanger::exchangeRates($this->main_currency, $this->second_currency);
 		
