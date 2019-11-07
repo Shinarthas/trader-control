@@ -116,7 +116,14 @@ class Task extends \yii\db\ActiveRecord
 		}
 		
 		if($promotion->market_id==4)
-			$this->rate = round($this->rate,2);
+		{
+			if($promotion->second_currency->data['pangu_step']==10)
+				$this->rate = round($this->rate,5);
+			elseif($promotion->second_currency->data['pangu_step']==100)
+				$this->rate = round($this->rate,4);
+			else
+				$this->rate = round($this->rate,2);
+		}
 		
 		$tokens_count = round($this->value/$this->rate, 1);
 		
