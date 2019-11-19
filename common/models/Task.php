@@ -167,8 +167,10 @@ class Task extends \yii\db\ActiveRecord
 			$this->status = self::STATUS_CREATED;
 			$this->progress = 100;
 			$this->created_at = time();
+            if(isset($result['data']['external_id']))
+                $this->external_id=$result['data']['external_id'];
 		}
-			
+
 		$this->save();
 		
 		return $result;

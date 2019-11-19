@@ -17,7 +17,7 @@ class AutoController extends Controller
 		
 		$tasks = Task::find()->with(['promotion', 'promotion.market', 'promotion.accounts'])->where(['<=','time',time()])->andWhere(['>=','time',time()-600])->andWhere(['status'=>Task::STATUS_NEW])->orderBy("time")->limit(8)->all();
 
-		if(date("i",time())%10==0)
+		if(date("i",time())%10==0)//что? зачем?
 			$promotions_active = Promotion::find()->all();
 		else
 			foreach($tasks as $t) 
@@ -29,7 +29,7 @@ class AutoController extends Controller
 			if($last_currency_two == $p->currency_two)
 				continue;
 			
-			$p->checkPrice();
+			$p->checkPrice();//это чтоб не делать чек курсса одной валюты много раз?
 			$last_currency_two = $p->currency_two;
 		}
 		
@@ -41,6 +41,7 @@ class AutoController extends Controller
 	
 	public function actionMakeTask() {
 		$task = Task::findOne(8012);  
+
 		$r = $task->make();
 		print_r($r);
 	}
@@ -57,7 +58,7 @@ class AutoController extends Controller
 				$promotion->createHourTasks(time());
 			else
 			{
-				if(date("H", time()) == 0)
+				if(date("H", time()) == 0)//про формат
 					$promotion->createDayTasks(time());
 			}
 		}
@@ -65,7 +66,7 @@ class AutoController extends Controller
 	
 	public function actionCalcProgress() {
 
-		if(date("i", time()) == 20 OR date("i", time()) == 40)
+		if(date("i", time()) == 20 OR date("i", time()) == 40)// это ведь никогда не выполняется
 			$promotions = Promotion::find()->where(['enabled'=>1, 'mode'=>Promotion::MODE_FAST_EARN])->all();
 		else
 			$promotions = Promotion::find()->where(['enabled'=>1])->all();
@@ -82,4 +83,17 @@ class AutoController extends Controller
 		$task = Task::findOne(167);
 		$task->cancelOrder();
 	}
+
+	public function actionCreateAdmin() {
+	    $admin = new \common\models\User;
+	    $admin->username = 'admin';
+	    $admin->email = 'admin';
+	    $admin->setPassword("xklcbup32500");
+	    $admin->generateAuthKey();
+	    if($admin->save())
+	        echo "OK";
+	    else
+	        print_r($admin->errors);
+
+    }
 }
