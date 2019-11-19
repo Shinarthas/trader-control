@@ -46,6 +46,7 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 
 	<p>mode: <select  name="Promotion[mode]"><? foreach($promotion::$modes as $value=>$mode) { $selected = ""; if($value == $promotion->mode) {$selected = "selected";}  echo "<option value='".$value."' ".$selected.">".$mode."</option>";}?></select></p>
 	
+	<p>currency one: <select  name="Promotion[currency_one]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_one == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
 	<p>currency two: <select  name="Promotion[currency_two]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_two == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
 
 	<p>exchanges per hour: <select name="settings[frequency]"><? foreach($promotion::$frequency_variants as $v=>$f) {  $selected = ""; if($v == $promotion->settings['frequency']) {$selected = "selected";}  echo "<option value=".$v." ".$selected.">".$f."</option>";}?></select></p>
