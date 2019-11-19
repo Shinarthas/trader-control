@@ -40,7 +40,7 @@ class AutoController extends Controller
 	}
 	
 	public function actionMakeTask() {
-		$task = Task::findOne(1134); 
+		$task = Task::findOne(8012);  
 		$r = $task->make();
 		print_r($r);
 	}

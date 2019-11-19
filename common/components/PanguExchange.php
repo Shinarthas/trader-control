@@ -8,7 +8,7 @@ use common\models\TaskAdditional;
 
 class PanguExchange {
 	
-	const CONTRACT_ADDRESS = '41ba78d7f021b0ff6e19f5b9c30392c0b9ec319f21';
+	const CONTRACT_ADDRESS = '41cede93067b2665c83665a0289457463e8a142668';
 	
 	// текущий курс продажи и покупки?
 	public static function sellOrder($currency_one, $currency_two, $tokens_count, $price, $account) {

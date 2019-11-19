@@ -121,6 +121,8 @@ class Task extends \yii\db\ActiveRecord
 				$this->rate = round($this->rate,5);
 			elseif($promotion->second_currency->data['pangu_step']==100)
 				$this->rate = round($this->rate,4);
+			elseif($promotion->second_currency->data['pangu_step']==1000)
+				$this->rate = round($this->rate,3);
 			else
 				$this->rate = round($this->rate,2);
 		}
