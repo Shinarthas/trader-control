@@ -32,8 +32,8 @@ class ApiRequest
 		
 		if($proxy != false)
 			curl_setopt($ch, CURLOPT_PROXY, $proxy);
-			
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 		
 		$res = curl_exec($ch);
 		

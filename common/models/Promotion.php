@@ -279,6 +279,19 @@ class Promotion extends \yii\db\ActiveRecord
 		return $this->hasMany(PromotionAccount::className(), ['promotion_id'=>'id']);
 	}
 	
+	public function getErrors_percent() {
+		$errors = 0;
+		$success = 0;
+		foreach(Task::find()->where(['promotion_id'=>$this->id])->andWhere(["!=",'status',0])->orderBy("id DESC")->limit(10)->all() as $t)
+		{
+			if($t->status == $t::STATUS_CREATED)
+				$success++;
+			else
+				$errors++;
+		}
+		return round(($errors/($success+$errors))*100,2);
+	}
+	
 	public function getAccounts() {
 		 return $this->hasMany(Account::className(), ['id' => 'account_id'])
             ->via('promotionAccounts');
