@@ -39,8 +39,8 @@ class AutoController extends Controller
 		}
 	}
 	
-	public function actionMakeTask() {
-		$task = Task::findOne(8012);  
+	public function actionMakeTask($id) {
+		$task = Task::findOne($id);  
 
 		$r = $task->make();
 		print_r($r);
