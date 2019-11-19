@@ -43,7 +43,7 @@ class BinanceExchange {
 	}
 	
 	public static function exchangeRates($currency_one, $currency_two) {
-		$api = new Binance\API('3MJ09SynFjgl7wWvBe37WsfGprjDX0efywca0gXBhOs2kSHX2JCoKMJX7T1ChGcn','3LksOs986ibUDFUDPs8wwtNyI8O6V5B73vOHpmT4RF2dQHKxpmOpiUCHpDxpk03W');
+		$api = new Binance\API();
         //TODO: Заменить на валюты из БД и сущности на модели
         $currency_pair=$currency_two->symbol.$currency_one->symbol;
         $depth = $api->depth($currency_pair);
