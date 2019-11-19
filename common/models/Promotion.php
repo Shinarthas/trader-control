@@ -83,8 +83,8 @@ class Promotion extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['currency_two', 'name', 'market_id',  'mode', 'settings_json',  'created_at'], 'required'],
-            [['currency_two', 'market_id', 'enabled', 'mode', 'started_at', 'created_at'], 'integer'],
+            [['currency_one','currency_two', 'name', 'market_id',  'mode', 'settings_json',  'created_at'], 'required'],
+            [['currency_one','currency_two', 'market_id', 'enabled', 'mode', 'started_at', 'created_at'], 'integer'],
             [['settings_json'], 'string'],
             [['name'], 'string', 'max' => 255],
         ];

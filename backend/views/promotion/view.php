@@ -45,8 +45,10 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 	<p>Hour volume: <input name="settings[hour_volume]" value="<?=$promotion->settings['hour_volume'];?>"> <?=$promotion->main_currency->symbol;?></p>
 
 	<p>mode: <select  name="Promotion[mode]"><? foreach($promotion::$modes as $value=>$mode) { $selected = ""; if($value == $promotion->mode) {$selected = "selected";}  echo "<option value='".$value."' ".$selected.">".$mode."</option>";}?></select></p>
-	
-	<p>currency two: <select  name="Promotion[currency_two]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_two == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
+
+    <p>currency one: <select  name="Promotion[currency_one]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_one == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
+
+    <p>currency two: <select  name="Promotion[currency_two]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_two == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
 
 	<p>exchanges per hour: <select name="settings[frequency]"><? foreach($promotion::$frequency_variants as $v=>$f) {  $selected = ""; if($v == $promotion->settings['frequency']) {$selected = "selected";}  echo "<option value=".$v." ".$selected.">".$f."</option>";}?></select></p>
 	<p>Make them per day tasks <input type="checkbox" name="settings[day_tasks]" <?=$promotion->settings['day_tasks']==1?"checked":"";?> value="1"></p>
