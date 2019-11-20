@@ -18,11 +18,10 @@ class BinanceExchange {
 		if($account->type!=self::BINANCE)
 		    return 0;
 
-		$proxy = $account->proxy;
-        $api = new Binance\API($account->data->api_key,$account->data->secret);
-        $currency_pair=$currency_one->symbol.$currency_two->symbol;
-        if(isset($currency_two->decimals))
-            $tokens_count=$tokens_count* 10**$currency_two->decimals;
+		//$proxy = $account->proxy;
+        $api = new Binance\API($account->data['api_key'],$account->data['secret']);
+        $currency_pair=$currency_two->symbol.$currency_one->symbol;
+
         //TODO:support proxy
         $order = $api->sell($currency_pair, $tokens_count, $price);
         return $order;
@@ -34,20 +33,19 @@ class BinanceExchange {
         if($account->type!=self::BINANCE)
             return 0;
 
-        $proxy = $account->proxy;
-        $api = new Binance\API($account->data->api_key,$account->data->secret);
-        $currency_pair=$currency_one->symbol.$currency_two->symbol;
-        if(isset($currency_two->decimals))
-            $tokens_count=$tokens_count* 10**$currency_two->decimals;
+        //$proxy = $account->proxy;
+        $api = new Binance\API($account->data['api_key'],$account->data['secret']);
+        $currency_pair=$currency_two->symbol.$currency_one->symbol;
+
         //TODO:support proxy
         $order = $api->buy($currency_pair, $tokens_count, $price);
         return $order;
 	}
 	
 	public static function exchangeRates($currency_one, $currency_two) {
-        $api = new Binance\API();
+		$api = new Binance\API();
         //TODO: Заменить на валюты из БД и сущности на модели
-        $currency_pair=$currency_one.$currency_two;
+        $currency_pair=$currency_two->symbol.$currency_one->symbol;
         $depth = $api->depth($currency_pair);
         return [
             'buy_price' => array_key_first($depth['asks']),
@@ -61,7 +59,7 @@ class BinanceExchange {
         $api = new Binance\API($account->data->api_key,$account->data->secret);
         $currency_one=Currency::findOne($promotion['currency_one']);
         $currency_two=Currency::findOne($promotion['currency_two']);
-        $currency_pair=$currency_one->symbol.$currency_two->symbol
+        $currency_pair=$currency_one->symbol.$currency_two->symbol;
         $openorders = $api->openOrders("BNBBTC");
         print_r($openorders);
 
