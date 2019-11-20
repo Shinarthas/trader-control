@@ -213,6 +213,7 @@ AppAsset::register($this);
 			<a href="/">Home</a>
 			<a href="/">Markets</a>
 			<a href="/account">Accounts</a>
+			<a href="/currency">Currencies</a>
 			<a>Statistic</a>
 			<a>Settings</a>
 			<a>Help</a>
@@ -226,7 +227,17 @@ AppAsset::register($this);
 				<p>Statistic - <b>OK</b></p>
 			</div>
 		</div>
-		
+        <?php // show errors if there any ?>
+        <?php if (Yii::$app->session->hasFlash('log')): ?>
+            <div class="alert alert-success alert-dismissable">
+                <?php $erors=Yii::$app->session->getFlash('log') ?>
+                <?php foreach ($erors as $key=>$value){ ?>
+                    <div class="btn-danger">
+                        <?php print_r($value)?>
+                    </div>
+                <?php } ?>
+            </div>
+        <?php endif; ?>
 		<div class="content" style="float:left;width: calc(100% - 180px);	">
         <?= $content ?>
 

@@ -41,11 +41,11 @@ class AccountController extends Controller
 			$a->type = $_POST['type'];
 			$a->label = $_POST['label'];
 			$a->save();
-			//return $this->redirect("/account/");
+			return $this->redirect("/account/");
 		}
-//		return $this->render("add",
-//            [
-//                'account_types'=>self::$account_types
-//            ]);
+		return $this->render("add",
+            [
+                'account_types'=>self::$account_types
+            ]);
 	}
 }
