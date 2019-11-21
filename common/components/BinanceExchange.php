@@ -13,7 +13,7 @@ class BinanceExchange {
 	const CONTRACT_ADDRESS = '41b3bddae866b2ce2349bdcb59dfbfa1a75f8552da';
 
 	const BINANCE=3;
-	// текущий курс продажи и покупки?
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ?
 	public static function sellOrder($currency_one, $currency_two, $tokens_count, $price, $account) {
 		if($account->type!=self::BINANCE)
 		    return 0;
@@ -27,7 +27,7 @@ class BinanceExchange {
         return $order;
 	}
 	
-	// текущий курс продажи и покупки?
+	// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ?
 	public static function buyOrder($currency_one, $currency_two, $tokens_count, $price, $account) {
 
         if($account->type!=self::BINANCE)
@@ -44,8 +44,10 @@ class BinanceExchange {
 	
 	public static function exchangeRates($currency_one, $currency_two) {
 		$api = new Binance\API();
-        //TODO: Заменить на валюты из БД и сущности на модели
-        $currency_pair=$currency_two->symbol.$currency_one->symbol;
+        //TODO: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
+        //$currency_pair=$currency_two->symbol.$currency_one->symbol;
+        $currency_pair=$currency_two->symbol.$currency_one->symbol;//  we have to keep same structure all over
+
         $depth = $api->depth($currency_pair);
         return [
             'buy_price' => array_key_first($depth['asks']),
@@ -55,14 +57,14 @@ class BinanceExchange {
 	
 	public static function loadUncompletedOrders($promotion, $account) {
         if($account->type==Account::BINANCE)
-            return 0;//это не аккаунт бинанса
+            return 0;//пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         $api = new Binance\API($account->data->api_key,$account->data->secret);
         $currency_one=Currency::findOne($promotion['currency_one']);
         $currency_two=Currency::findOne($promotion['currency_two']);
-        $currency_pair=$currency_one->symbol.$currency_two->symbol;
-        $openorders = $api->openOrders("BNBBTC");
-        print_r($openorders);
-
+        $currency_pair=$currency_two->symbol.$currency_one->symbol;
+        $openorders = $api->openOrders();
+        //print_r($openorders);
+        return $openorders;
 
 
 
@@ -139,17 +141,17 @@ class BinanceExchange {
 		}
 	}
 
-	//TODO:обсудить/переделать
+	//TODO:пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ/пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	//public static function cancelOrder($account, $external_id) {
 	public static function cancelOrder($account, Order $order) {
 
 	    if($account->type==Account::BINANCE)
-	        return 0;//это не аккаунт бинанса
+	        return 0;//пїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         $api = new Binance\API($account->data->api_key,$account->data->secret);
         $currency_one=$order->getMain_currency()->one();
         $currency_two=$order->getSecond_currency()->one();
 
-        $currency_pair=$currency_one->symbol.$currency_two->symbol;
+        $currency_pair=$currency_two->symbol.$currency_one->symbol;
         $response = $api->cancel("ETHBTC", $order->market_order_id);
 	    return $response;
 	}
