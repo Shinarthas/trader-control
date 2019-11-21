@@ -1,6 +1,7 @@
 <?php
 namespace console\controllers;
 
+use api\v1\renders\ResponseRender;
 use Yii;
 use yii\helpers\Console;
 use yii\console\Controller;
@@ -22,13 +23,13 @@ class AutoController extends Controller
 		else
 			foreach($tasks as $t) 
 				$promotions_active[$t->promotion_id] = $t->promotion;
-		
+
+        $promotions_active = Promotion::find()->all();
 
 		$last_currency_two = 0;
 		foreach($promotions_active as $p) {
 			if($last_currency_two == $p->currency_two)
 				continue;
-			
 			$p->checkPrice();//это чтоб не делать чек курсса одной валюты много раз?
 			$last_currency_two = $p->currency_two;
 		}
@@ -95,5 +96,19 @@ class AutoController extends Controller
 	    else
 	        print_r($admin->errors);
 
+    }
+    public function actionUpdate() {
+        $order = Task::findOne(83);
+        $order->attributes = [
+            'id'=>'83',
+            'canceled'=>'0',
+            'external_id'=>'22724951',
+            'progress'=>'0',
+            'status'=>'5',
+
+        ];
+        $order->loaded_at = time();
+        if(!$order->save())
+            print_r($order->errors);
     }
 }

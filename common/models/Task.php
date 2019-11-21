@@ -4,6 +4,7 @@ namespace common\models;
 
 use Yii;
 use common\components\ApiRequest;
+use yii\helpers\ArrayHelper;
 
 /**
  * This is the model class for table "task".
@@ -19,6 +20,7 @@ use common\components\ApiRequest;
  * @property string $rate
  * @property int $progress
  * @property string $data_json
+ * @property string $external_id
  * @property int $time
  * @property int $created_at
  * @property int $loaded_at
@@ -39,7 +41,8 @@ class Task extends \yii\db\ActiveRecord
 	const STATUS_PRICE_ERROR = 3;
 	const STATUS_CANCELED = 4;
 	const STATUS_ACCOUNT_NOT_FOUND = 11;
-	
+
+
 	
 	public static $statuses = [
 		self::STATUS_NEW => 'new',
@@ -69,7 +72,7 @@ class Task extends \yii\db\ActiveRecord
     {
         return [
             [['promotion_id',  'value', 'random_curve', 'time'], 'required'],
-            [['canceled','promotion_id', 'external_id', 'account_id', 'status', 'sell', 'value', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
+            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'value', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
             [['random_curve', 'tokens_count', 'rate'], 'number'],
             [['data_json'], 'string'],
         ];
@@ -105,16 +108,14 @@ class Task extends \yii\db\ActiveRecord
 		$promotion = $this->promotion;
 		if($promotion->enabled == 0)
 			return false;
-			
+
 		$this->save();
-		
-		if(!$this->calculateRate())
+		if(!$res=$this->calculateRate())
 		{
 			$this->status = self::STATUS_PRICE_ERROR;
 			$this->save();
 			return false;
 		}
-		
 		if($promotion->market_id==4)
 		{
 			if($promotion->second_currency->data['pangu_step']==10)
@@ -132,7 +133,7 @@ class Task extends \yii\db\ActiveRecord
 		if($this->sell == 1 AND (int)$promotion->settings['fixed_tasks_currency_two']!=0) {
 			$tokens_count = $promotion->settings['fixed_tasks_currency_two'];
 		}
-		
+
 		if($promotion->settings['calculate_account']!=1)
 			$account = $this->promotion->accounts[array_rand($this->promotion->accounts,1)];
 		else
@@ -148,7 +149,6 @@ class Task extends \yii\db\ActiveRecord
 		$this->account_id = $account->id;
 		
 		$this->tokens_count = $tokens_count;
-		
 
 		$result = ApiRequest::accounts('v1/orders/create', 
 			[
@@ -166,8 +166,13 @@ class Task extends \yii\db\ActiveRecord
 			$this->status = self::STATUS_CREATED;
 			$this->progress = 100;
 			$this->created_at = time();
-            //if(isset($result['data']['external_id']))
-            //    $this->external_id=$result['data']['external_id'];
+            if(isset($result->data->external_id)){
+                $this->external_id=$result->data->external_id;
+            }
+            //update same info on statistics server
+            $resultStatistics = ApiRequest::statistics('v1/orders/create',
+                ArrayHelper::toArray($this));
+            //print_r($resultStatistics);
 		}
 
 		$this->save();
@@ -177,22 +182,18 @@ class Task extends \yii\db\ActiveRecord
 	
 	public function calculateRate() {
 		$promotion = $this->promotion;
-		
 		if(!$price = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two))
 			return false;
-		
+
 		//if(!$price = CurrencyPrice::currentPrice(1, $promotion->currency_one, $promotion->currency_two))
 		//		return false;
-		
 		$timeout = 900;
 		
 		if($promotion->market_id==2)
 			$timeout = 10000;
-		
 		if(time() - $price->created_at > $timeout)
 			return false;
-			
-		
+
 		$random_rate = 1;
 		if(rand(0,2) != 0)
 			$random_rate = ((100 + $this->random_curve) / 100);
@@ -258,7 +259,7 @@ class Task extends \yii\db\ActiveRecord
 			$buy_rate  = 1 - ($promotion->settings['earn_percent']/100);
 				
 			$rand_again = rand(0,10);
-			
+
 			if(!$currency = CurrencyPrice::find()->where(['currency_one' => $promotion->currency_one , 'currency_two' => $promotion->currency_two])->andWhere(['BETWEEN', 'created_at', time() - 3000, time() - 2000])->one())
 				return false;
 					
@@ -300,7 +301,7 @@ class Task extends \yii\db\ActiveRecord
 			$sell_rate+= $small_rand;
 			$buy_rate+= $small_rand;
 			
-			
+
 			if(!$currency = CurrencyPrice::find()->where(['currency_one' => $promotion->currency_one , 'currency_two' => $promotion->currency_two])->andWhere(['BETWEEN', 'created_at', time() - 3000, time() - 2000])->one())
 				return false;
 					
@@ -336,9 +337,13 @@ class Task extends \yii\db\ActiveRecord
 	}
 	
 	public function cancelOrder() {
-		$this->canceled = 1;
-		$this->save();
-		return ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id ]);
+        $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id ]);
+		if($res->status){
+            $this->canceled = 1;
+            $this->save();
+        }
+
+		return $res;
 	}
 	
 	public function getPromotion() {
