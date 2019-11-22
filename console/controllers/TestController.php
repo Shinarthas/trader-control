@@ -22,7 +22,7 @@ class TestController extends Controller
     }
     public function actionPriceNow($promotion_id){
 	    $promotion=Promotion::findOne($promotion_id);
-	    $res=CurrencyPrice::currentPrice($promotion->market_id,$promotion->currency_one,$promotion->currency_two);
+	    $res=CurrencyPrice::currentPrice($promotion->market_id,$promotion->currency_one,$promotion->currency_two,900,600);
 	    print_r($res);
     }
 }
