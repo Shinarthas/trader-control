@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\components\ApiRequest;
 use Yii;
 
 /**
@@ -63,7 +64,19 @@ class CurrencyPrice extends \yii\db\ActiveRecord
 		return ($data->buy_price + $data->sell_price)/2;
 	}
 	
-	public static function currentPrice($market_id, $currency_one, $currency_two) {
-		return self::find()->where(['market_id'=>$market_id, 'currency_one'=>$currency_one, 'currency_two'=>$currency_two])->orderBy("id DESC")->one();
+	public static function currentPrice($market_id, $currency_one, $currency_two, $from=900, $to=600) {//BETWEEN time()-900 < TIME < time()-600
+        //API REQUEST
+        $res=ApiRequest::statistics('v1/exchange-course/current-course',[
+            'market_id'=>$market_id,
+            'currency_one'=>$currency_one,
+            'currency_two'=>$currency_two,
+            'from'=>$from,
+            'to'=>$to,
+        ]);//offset in seconds
+        if ($res->status)
+            return $res->data;
+        else
+            return 0;
+		//return self::find()->where(['market_id'=>$market_id, 'currency_one'=>$currency_one, 'currency_two'=>$currency_two])->orderBy("id DESC")->one();
 	}
 }
