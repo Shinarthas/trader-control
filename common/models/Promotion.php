@@ -264,21 +264,24 @@ class Promotion extends \yii\db\ActiveRecord
 	
 	public function checkPrice() {
 
-        $res=ApiRequest::statistics('/v1/exchange-course/get-course',ArrayHelper::toArray($this));
-        print_r($res);
+        $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
 
-		$exchanger = '\\common\\components\\' .$this->market->class;
-		
-		$data = $exchanger::exchangeRates($this->main_currency, $this->second_currency);
-		
-		$rates = new CurrencyPrice;
-		$rates->currency_one = $this->currency_one;
-		$rates->currency_two = $this->currency_two;
-		$rates->market_id = $this->market_id;
-		$rates->buy_price = $data['buy_price'];
-		$rates->sell_price = $data['sell_price'];
-		$rates->created_at = time();
-		$rates->save();
+		if(!$res->status){
+            //TODO:log error
+        }
+
+
+		$data = json_decode(json_encode($res->data),true);
+
+		//uncomment  if you decide to save it on this server
+//		$rates = new CurrencyPrice;
+//		$rates->currency_one = $this->currency_one;
+//		$rates->currency_two = $this->currency_two;
+//		$rates->market_id = $this->market_id;
+//		$rates->buy_price = $data['buy_price'];
+//		$rates->sell_price = $data['sell_price'];
+//		$rates->created_at = time();
+//		$rates->save();
 	}
 	
 	public function getPromotionAccounts() {
