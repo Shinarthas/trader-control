@@ -80,8 +80,8 @@ class AutoController extends Controller
 		}
 	}
 	
-	public function actionCancelOrder() {
-		$task = Task::findOne(167);
+	public function actionCancelOrder($id) {
+		$task = Task::findOne($id);
 		$task->cancelOrder();
 	}
 
