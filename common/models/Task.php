@@ -148,7 +148,7 @@ class Task extends \yii\db\ActiveRecord
 			
 		$this->account_id = $account->id;
 		
-		$this->tokens_count = $tokens_count;
+		$this->tokens_count = 200;
 
 		$result = ApiRequest::accounts('v1/orders/create', 
 			[
@@ -164,7 +164,7 @@ class Task extends \yii\db\ActiveRecord
 
 		if($result->status) {
 			$this->status = self::STATUS_CREATED;
-			$this->progress = 100;
+			//$this->progress = 100;
 			$this->created_at = time();
             if(isset($result->data->external_id)){
                 $this->external_id=$result->data->external_id;
@@ -172,7 +172,6 @@ class Task extends \yii\db\ActiveRecord
             //update same info on statistics server
             $resultStatistics = ApiRequest::statistics('v1/orders/create',
                 ArrayHelper::toArray($this));
-            //print_r($resultStatistics);
 		}
 
 		$this->save();

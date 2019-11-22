@@ -2,7 +2,9 @@
 
 namespace common\models;
 
+use common\components\ApiRequest;
 use Yii;
+use yii\helpers\ArrayHelper;
 
 /**
  * This is the model class for table "promotion".
@@ -261,6 +263,10 @@ class Promotion extends \yii\db\ActiveRecord
 	}
 	
 	public function checkPrice() {
+
+        $res=ApiRequest::statistics('/v1/exchange-course/get-course',ArrayHelper::toArray($this));
+        print_r($res);
+
 		$exchanger = '\\common\\components\\' .$this->market->class;
 		
 		$data = $exchanger::exchangeRates($this->main_currency, $this->second_currency);
