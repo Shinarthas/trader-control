@@ -264,17 +264,17 @@ class Promotion extends \yii\db\ActiveRecord
 	
 	public function checkPrice() {
 
-      /*  $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
-
+        $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
+print_r($res);
 		if(!$res->status){
             //TODO:log error
         }
 
 
 		$data = json_decode(json_encode($res->data),true);
-*/
+
 		//uncomment  if you decide to save it on this server
-		$exchanger = '\\common\\components\\' .$this->market->class;
+	/*	$exchanger = '\\common\\components\\' .$this->market->class;
 		
 		$data = $exchanger::exchangeRates($this->main_currency, $this->second_currency);
 		
@@ -285,7 +285,7 @@ class Promotion extends \yii\db\ActiveRecord
 		$rates->buy_price = $data['buy_price'];
 		$rates->sell_price = $data['sell_price'];
 		$rates->created_at = time();
-		$rates->save();
+		$rates->save();*/
 	}
 	
 	public function getPromotionAccounts() {

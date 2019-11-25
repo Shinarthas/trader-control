@@ -56,18 +56,26 @@ class CurrencyPrice extends \yii\db\ActiveRecord
 	
 	public static function avgPrice($market_id, $currency_one, $currency_two) {
 	
-		$data = self::find()->where(['market_id'=>$market_id, 'currency_one'=>$currency_one, 'currency_two'=>$currency_two])->orderBy("id DESC")->one();
-		
-		if(time() - $data->created_at > 900)
-			return 0;
-		
-		return ($data->buy_price + $data->sell_price)/2;
+		 $res=ApiRequest::statistics('v1/exchange-course/current-course',[
+            'market_id'=>$market_id,
+            'currency_one'=>$currency_one,
+            'currency_two'=>$currency_two,
+            'from'=>$from,
+            'to'=>$to,
+        ]);
+        if ($res->status) {
+			$data = $res->data;
+			 
+            return ($data->buy_price + $data->sell_price)/2;
+		}
+        else
+            return 0;
 	}
 	
 	public static function currentPrice($market_id, $currency_one, $currency_two, $from=900, $to=600) {//BETWEEN time()-900 < TIME < time()-600
-		return self::find()->where(['market_id'=>$market_id, 'currency_one'=>$currency_one, 'currency_two'=>$currency_two])->orderBy("id DESC")->one();
+	//	return self::find()->where(['market_id'=>$market_id, 'currency_one'=>$currency_one, 'currency_two'=>$currency_two])->orderBy("id DESC")->one();
 	
-        //API REQUEST
+        //API REQUEST 
         $res=ApiRequest::statistics('v1/exchange-course/current-course',[
             'market_id'=>$market_id,
             'currency_one'=>$currency_one,

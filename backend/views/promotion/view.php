@@ -91,6 +91,7 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 	<table>
 	<thead>
 		<tr>
+			<th>id</th>
 			<th>direction</th>
 			<th>acc</th>
 			<th>date</th>
@@ -103,6 +104,7 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 	<tbody>
 	<? foreach($promotion->tasks as $t): ?>
 		<tr>
+			<td><?=$t->id;?></td>
 			<td><?=($t->sell==1)?'<b style="color:orange">sell</b>':'<b style="color:purple;">buy</b>';?></td>
 			<td><?=$t->account_id;?></td>
 			<td><?=date("d/m/y H:i", $t->time);?></td>
