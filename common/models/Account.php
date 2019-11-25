@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\components\ApiRequest;
 use Yii;
 
 /**
@@ -43,5 +44,12 @@ class Account extends \yii\db\ActiveRecord
             'type' => 'Type',
             'name' => 'Name',
         ];
+    }
+
+    public function getBalance(){
+        $res=ApiRequest::statistics('v1/account/get-balance',['id'=>$this->id]);
+        if($res->status)
+            return $res->data;
+        return 0;
     }
 }
