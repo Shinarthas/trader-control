@@ -65,6 +65,8 @@ class CurrencyPrice extends \yii\db\ActiveRecord
 	}
 	
 	public static function currentPrice($market_id, $currency_one, $currency_two, $from=900, $to=600) {//BETWEEN time()-900 < TIME < time()-600
+		return self::find()->where(['market_id'=>$market_id, 'currency_one'=>$currency_one, 'currency_two'=>$currency_two])->orderBy("id DESC")->one();
+	
         //API REQUEST
         $res=ApiRequest::statistics('v1/exchange-course/current-course',[
             'market_id'=>$market_id,
