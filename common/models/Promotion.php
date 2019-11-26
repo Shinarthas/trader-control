@@ -235,6 +235,7 @@ class Promotion extends \yii\db\ActiveRecord
 	
 	public function newClearOrders() {
 		$currency_price = CurrencyPrice::avgPrice($this->market_id, $this->currency_one, $this->currency_two);
+
 		if($currency_price == 0)
 			return false;
 		
@@ -265,7 +266,7 @@ class Promotion extends \yii\db\ActiveRecord
 	public function checkPrice() {
 
         $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
-print_r($res);
+
 		if(!$res->status){
             //TODO:log error
         }
