@@ -265,7 +265,6 @@ class Promotion extends \yii\db\ActiveRecord
 	public function checkPrice() {
 
         $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
-print_r($res);
 		if(!$res->status){
             //TODO:log error
         }

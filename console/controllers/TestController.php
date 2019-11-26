@@ -2,6 +2,7 @@
 namespace console\controllers;
 
 use api\v1\renders\ResponseRender;
+use common\models\Account;
 use common\models\CurrencyPrice;
 use Yii;
 use yii\helpers\Console;
@@ -18,11 +19,16 @@ class TestController extends Controller
 
     public function actionPrice(){
 	    $promotion=Promotion::findOne(5);
-	    $promotion->checkPrice();
+	    print_r($promotion->checkPrice());
     }
     public function actionPriceNow($promotion_id){
 	    $promotion=Promotion::findOne($promotion_id);
 	    $res=CurrencyPrice::currentPrice($promotion->market_id,$promotion->currency_one,$promotion->currency_two,900,600);
+	    print_r($res);
+    }
+    public function actionBalance($account_id){
+	    $account=Account::findOne($account_id);
+	    $res=$account->getBalance();
 	    print_r($res);
     }
 }
