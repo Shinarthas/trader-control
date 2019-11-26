@@ -182,7 +182,7 @@ class Task extends \yii\db\ActiveRecord
 	
 	public function calculateRate() {
 		$promotion = $this->promotion;
-		if(!$price = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two))
+		if(!$price = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 300,0))
 			return false;
 
 		//if(!$price = CurrencyPrice::currentPrice(1, $promotion->currency_one, $promotion->currency_two))
@@ -260,7 +260,7 @@ class Task extends \yii\db\ActiveRecord
 				
 			$rand_again = rand(0,10);
 
-			if(!$currency = CurrencyPrice::find()->where(['currency_one' => $promotion->currency_one , 'currency_two' => $promotion->currency_two])->andWhere(['BETWEEN', 'created_at', time() - 3000, time() - 2000])->one())
+			if(!$currency = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 3000,2000))
 				return false;
 					
 			if($this->sell == 1) {
@@ -302,7 +302,7 @@ class Task extends \yii\db\ActiveRecord
 			$buy_rate+= $small_rand;
 			
 
-			if(!$currency = CurrencyPrice::find()->where(['currency_one' => $promotion->currency_one , 'currency_two' => $promotion->currency_two])->andWhere(['BETWEEN', 'created_at', time() - 3000, time() - 2000])->one())
+			if(!$currency = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 3000, 2000))
 				return false;
 					
 			if($this->sell == 1) {

@@ -217,24 +217,24 @@ class Promotion extends \yii\db\ActiveRecord
 		if($this->settings['order_cancel'] != 0)
 			$orders_limit = $this->settings['order_cancel'];
 		
-		$count_sell_orders = Task::find()->select("count(id) as count")->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>1])->andWhere(['>', 'loaded_at', time()-300])->scalar();
+		$count_sell_orders = Task::find()->select("count(id) as count")->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>1])->andWhere(['>', 'loaded_at', time()-900])->scalar();
 		
 		//echo "count sell orders: ".$count_sell_orders.'<br>';
-		$count_buy_orders = Task::find()->select("count(id) as count")->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>0])->andWhere(['>', 'loaded_at', time()-300])->scalar();
+		$count_buy_orders = Task::find()->select("count(id) as count")->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>0])->andWhere(['>', 'loaded_at', time()-900])->scalar();
 		
 		//echo "count buy orders: ".$count_buy_orders.'<br>';
 		
-		foreach(Task::find()->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>1])->andWhere(['>', 'loaded_at', time()-300])->orderBy("rate DESC")->limit($count_sell_orders - $orders_limit)->all() as $task)
+		foreach(Task::find()->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>1])->andWhere(['>', 'loaded_at', time()-900])->orderBy("rate DESC")->limit($count_sell_orders - $orders_limit)->all() as $task)
 			if(rand(0,3) != 3)
 				$task->cancelOrder();
 		
-		foreach(Task::find()->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>0])->andWhere(['>', 'loaded_at', time()-300])->orderBy("rate")->limit($count_buy_orders - $orders_limit)->all() as $task)
+		foreach(Task::find()->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>0])->andWhere(['>', 'loaded_at', time()-900])->orderBy("rate")->limit($count_buy_orders - $orders_limit)->all() as $task)
 			if(rand(0,3) != 3)
 				$task->cancelOrder();
 	}
 	
 	public function newClearOrders() {
-		$currency_price = CurrencyPrice::avgPrice($this->platform_id, $this->currency_one, $this->currency_two);
+		$currency_price = CurrencyPrice::avgPrice($this->market_id, $this->currency_one, $this->currency_two);
 		if($currency_price == 0)
 			return false;
 		
@@ -246,13 +246,13 @@ class Promotion extends \yii\db\ActiveRecord
 		$sell_lower_rate = $currency_price*(1 + (($this->settings['earn_percent']/2)/100));
 		$sell_upper_rate = $sell_lower_rate*(1 + $orders_width);
 		
-		$tasks2 = TaskAdditional::find()->where(['sell'=>1])->andWhere(['>','rate',$sell_upper_rate])->andWhere(['>', 'loaded_at', time()-300])->all();
+		$tasks2 = Task::find()->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>1])->andWhere(['>','rate',$sell_upper_rate])->andWhere(['>', 'loaded_at', time()-1100])->all();
 		
 		// calculating trasholds for buy orders
 		$buy_upper_rate  = $currency_price*(1 - (($this->settings['earn_percent']/2)/100));
 		$buy_lower_rate = $buy_upper_rate*(1 - $orders_width);
 		
-		$tasks4 = TaskAdditional::find()->where(['sell'=>0])->andWhere(['<','rate',$buy_lower_rate])->andWhere(['>', 'loaded_at', time()-300])->all();
+		$tasks4 = Task::find()->where(['promotion_id'=>$this->id, 'status'=>2, 'sell'=>0])->andWhere(['<','rate',$buy_lower_rate])->andWhere(['>', 'loaded_at', time()-1100])->all();
 		
 		$tasks = array_merge($tasks2, $tasks4);
 		
@@ -265,7 +265,6 @@ class Promotion extends \yii\db\ActiveRecord
 	public function checkPrice() {
 
         $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
-        print_r($res);
 		if(!$res->status){
             //TODO:log error
         }
@@ -274,14 +273,18 @@ class Promotion extends \yii\db\ActiveRecord
 		$data = json_decode(json_encode($res->data),true);
 
 		//uncomment  if you decide to save it on this server
-//		$rates = new CurrencyPrice;
-//		$rates->currency_one = $this->currency_one;
-//		$rates->currency_two = $this->currency_two;
-//		$rates->market_id = $this->market_id;
-//		$rates->buy_price = $data['buy_price'];
-//		$rates->sell_price = $data['sell_price'];
-//		$rates->created_at = time();
-//		$rates->save();
+	/*	$exchanger = '\\common\\components\\' .$this->market->class;
+		
+		$data = $exchanger::exchangeRates($this->main_currency, $this->second_currency);
+		
+		$rates = new CurrencyPrice;
+		$rates->currency_one = $this->currency_one;
+		$rates->currency_two = $this->currency_two;
+		$rates->market_id = $this->market_id;
+		$rates->buy_price = $data['buy_price'];
+		$rates->sell_price = $data['sell_price'];
+		$rates->created_at = time();
+		$rates->save();*/
 	}
 	
 	public function getPromotionAccounts() {
