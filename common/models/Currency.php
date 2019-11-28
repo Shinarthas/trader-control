@@ -12,6 +12,7 @@ use Yii;
  * @property int $decimals
  * @property int $type
  * @property string $address
+ * @property string $class
  * @property string $data_json
  * @property int $created_at
  */
@@ -34,7 +35,7 @@ class Currency extends \yii\db\ActiveRecord
             [['symbol', 'decimals', 'type', 'address', 'data_json', 'created_at'], 'required'],
             [['decimals', 'type', 'created_at'], 'integer'],
             [['data_json'], 'string'],
-            [['symbol', 'address'], 'string', 'max' => 255],
+            [['symbol', 'address','class'], 'string', 'max' => 255],
         ];
     }
 
@@ -49,6 +50,7 @@ class Currency extends \yii\db\ActiveRecord
             'decimals' => 'Decimals',
             'type' => 'Type',
             'address' => 'Address',
+            'class' => 'Class Handler',
             'data_json' => 'Data Json',
             'created_at' => 'Created At',
         ];
