@@ -42,16 +42,16 @@ class Promotion extends \yii\db\ActiveRecord
 	const MODE_JUST_BUY = 20;
 	
 	public static $modes = [
-		self::MODE_STABILIZE => 'stabilize price',
-		self::MODE_INCREASE => 'increase price',
-		self::MODE_USER_SIMULATOR => 'user simulator',
-		self::MODE_FAST_VOLUME => 'fast volume increase',
-		self::MODE_VOLUME_INCREASE => 'smart volume increase',
-		self::MODE_PERCENT_EARN => '2% earning',
-		self::MODE_FAST_EARN => '1% earning',
-		self::MODE_SAFE_EXIT => 'safe exit',
-		self::MODE_JUST_BUY => 'just buy',
-		self::MODE_PUMP_DUMP => 'pumping/dumping',
+		self::MODE_STABILIZE => ['name'=>'stabilize price','hidden_fields'=>[]],//hide fields where their names includes %$val%
+		self::MODE_INCREASE => ['name'=>'increase price','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
+		self::MODE_USER_SIMULATOR => ['name'=>'user simulator','hidden_fields'=>['speed']],
+		self::MODE_FAST_VOLUME => ['name'=>'fast volume increase','hidden_fields'=>['frequency']],
+		self::MODE_VOLUME_INCREASE => ['name'=>'smart volume increase','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
+		self::MODE_PERCENT_EARN => ['name'=>'2% earning','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
+		self::MODE_FAST_EARN => ['name'=>'1% earning','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
+		self::MODE_SAFE_EXIT => ['name'=>'safe exit','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
+		self::MODE_JUST_BUY => ['name'=>'just buy','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
+		self::MODE_PUMP_DUMP => ['name'=>'pumping/dumping','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
 	];
 		public static $frequency_variants = [
 			'1',
