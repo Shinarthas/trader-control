@@ -49,6 +49,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 	<p>Decimals: <input name="currency[decimals]" class="decimals" value="<?=$currency->decimals;?>"></p>
 	<input name="currency[type]"  type="hidden"  class="type" value="<?=1;?>">
 	<p>Address: <input name="currency[address]" class="address" value="<?=strlen($currency->address)>3?$currency->address:'0x';?>"></p>
+	<p>Address: <input name="currency[class]" class="class" value="<?=strlen($currency->class)>3?$currency->class:'GoodCurrency';?>"></p>
 
 
 
@@ -132,6 +133,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 'decimals' : form.find('.decimals').val(),
                 'type' : form.find('.type').val(),
                 'address' : form.find('.address').val(),
+                'class' : form.find('.class').val(),
                 'data': editor.get()
             };
 

@@ -43,6 +43,7 @@ class CurrencyController extends Controller
             $currency['decimals']=intval($_POST['decimals']);
             $currency['type']=$_POST['type'];
             $currency['address']=$_POST['address'];
+            $currency['class']=$_POST['class'];
             $currency['data']=$_POST['data'];
             $currency->save();
 

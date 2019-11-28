@@ -2,6 +2,8 @@
 namespace console\controllers;
 
 use api\v1\renders\ResponseRender;
+use common\assets\BikiApi;
+use common\components\ApiRequest;
 use common\models\Account;
 use common\models\CurrencyPrice;
 use Yii;
@@ -29,6 +31,19 @@ class TestController extends Controller
     public function actionBalance($account_id){
 	    $account=Account::findOne($account_id);
 	    $res=$account->getBalance();
+	    print_r($res);
+    }
+    public function actionLogList(){
+	    $res=ApiRequest::statistics('v1/log/get',[]);
+	    print_r($res);
+    }
+    public function actionBiki(){
+	    $biki=new BikiApi();
+	    $res=$biki->depth(strtolower('ethbtc'));
+	    print_r($res);
+    }
+    public function actionGraph(){
+	    $res=ApiRequest::statistics('v1/promotion/graph',['promotion_id'=>5,'candles'=>24]);
 	    print_r($res);
     }
 }
