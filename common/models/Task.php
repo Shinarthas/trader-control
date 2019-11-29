@@ -150,7 +150,7 @@ class Task extends \yii\db\ActiveRecord
 		$this->account_id = $account->id;
 		
 		$this->tokens_count = $tokens_count;
-		$this->tokens_count = 200;
+		$this->tokens_count = 120;
 
 		$result = ApiRequest::accounts('v1/orders/create', 
 			[
@@ -163,6 +163,7 @@ class Task extends \yii\db\ActiveRecord
 			'tokens_count' => $this->tokens_count,
 			'promotion_id' => $this->promotion_id,
 			'rate' => $this->rate,
+			'use_paid_proxy' => $this->promotion->is_paid_proxy,
 			]);
 
 		if($result->status) {
@@ -186,6 +187,7 @@ class Task extends \yii\db\ActiveRecord
 		$promotion = $this->promotion;
 		if(!$price = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 300,0))
 			return false;
+
 
 		//if(!$price = CurrencyPrice::currentPrice(1, $promotion->currency_one, $promotion->currency_two))
 		//		return false;
@@ -332,14 +334,14 @@ class Task extends \yii\db\ActiveRecord
 			else
 				$this->rate = $price->sell_price * $increase_rate * (1 + $random_pump_dupm);
 		}
-	
+        print_r($price);
+	    echo $this->rate; die();
 		$this->rate = round($this->rate,5);
-		
 		return true;
 	}
 	
 	public function cancelOrder() {
-        $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id ]);
+        $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => $this->promotion->is_paid_proxy, ]);
 		if($res->status){
             $this->canceled = 1;
             $this->save();

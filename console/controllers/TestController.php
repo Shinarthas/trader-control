@@ -46,4 +46,9 @@ class TestController extends Controller
 	    $res=ApiRequest::statistics('v1/promotion/graph',['promotion_id'=>5,'candles'=>24]);
 	    print_r($res);
     }
+
+    public function actionPromotion($task_id){
+	    $task=Task::findOne($task_id);
+	    print_r($task->promotion);
+    }
 }

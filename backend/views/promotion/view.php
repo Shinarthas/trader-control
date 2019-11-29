@@ -77,6 +77,7 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 	<p>limit per account: <input name="settings[limit_per_account]" value="<?=(int)$promotion->settings['limit_per_account'];?>"></p>
 	<input type="hidden"  name="settings[only_day]" value="0">
 	<p>only day actions <input type="checkbox" name="settings[only_day]" <?=$promotion->settings['only_day']==1?"checked":"";?> value="1"></p>
+	<p>Use Paid Proxy? <input type="checkbox" name="is_paid_proxy" <?=$promotion->is_paid_proxy?"checked":"";?> value="1"></p>
 
 	
 	<input type="submit" value="Save" name="save">
