@@ -89,6 +89,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                     dataSource: $.extend(true, {}, iChartDataSource)
                 }
         );
+		$(".iChart").iguanaChart("setTheme", 'Dark');
     });
 </script>
 
