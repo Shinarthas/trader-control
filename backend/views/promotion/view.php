@@ -16,10 +16,81 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 		}
 </style>
 
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.js"></script>
+    <script type="text/javascript" src="/dependencies/i18n/i18n.en.js"></script>
+
+    <link rel="stylesheet" href="/dependencies/uikit/css/uikit.min.css" media="all">
+    <link rel="stylesheet" href="/dependencies/jquery.qtip.min.css" media="all">
+	
+    <link rel="stylesheet" href="/dependencies/jquery-minicolors/jquery.minicolors.css" media="all">
+    <link rel="stylesheet" href="/dependencies/iguanachart.min.css" media="all">
+
+   <script type="text/javascript">
+        require.config({
+            paths: {
+                jquery: 'https://code.jquery.com/jquery-1.12.4.min',
+                uikit: '/dependencies/uikit/js/uikit.min',
+                'jquery.eventmove': '/dependencies/jquery.event.move',
+                'jquery.hammer': '/dependencies/jquery.hammer',
+                'jsrender': "/dependencies/jsrender.min",
+                'jquery.minicolors': '/dependencies/jquery-minicolors/jquery.minicolors.min',
+                'jquery.qtip': '/dependencies/jquery.qtip.min',
+                'iguanachart': '/dependencies/iguanachart',
+                'hammerjs': '/dependencies/hammer.min'
+            },
+            shim: {
+                'uikit': {
+                    deps: [
+                        'jquery'
+                    ]
+                },
+                jsrender: {
+                    deps: [
+                        'jquery'
+                    ]
+                },
+                iguanachart: {
+                    deps: [
+                        'jquery',
+                        'uikit',
+                        'jquery.eventmove',
+                        'jquery.hammer',
+                        'jsrender',
+                        'jquery.minicolors',
+                        'jquery.qtip'
+                    ]
+                }
+            }
+        })
+    </script>
 
 	
 <h3 style="text-align:center;padding:15px 0 0 0 ;font-size:28px;color: #ffffffdf;"><?=$promotion->name;?> <?=$promotion->main_currency->symbol;?> / <?=$promotion->second_currency->symbol;?></h3>
 <div class="row" style="margin: 21px;">
+
+<div class="iChart" style="position: relative; height: 550px; width: 100%"></div>
+
+<script type="text/javascript">
+    require(['jquery', 'iguanachart'], function ($) {
+        iChartDataSource.host = "<?=\Yii::$app->params['statistics-api-url'];?>/v1/promotion/graph/<?=$promotion->id;?>";
+	//	iChartDataSource.host = "https://beta.tradernet.ru";
+
+        $('.iChart').iguanaChart(
+                {
+                    ticker: "<?=$promotion->main_currency->symbol;?> - <?=$promotion->second_currency->symbol;?>",
+					//ticker: "AAPL.US",
+                    period: "1M",
+                    lib_path: "/dist",
+                    chartOptions: {
+                        minHeight: 500,
+                        showVolume: 'inside',
+                        uiTools: {top: true}
+                    },
+                    dataSource: $.extend(true, {}, iChartDataSource)
+                }
+        );
+    });
+</script>
 
 <div class="col-md-6">
 
