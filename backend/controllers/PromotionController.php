@@ -2,6 +2,7 @@
 namespace backend\controllers;
 
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 use common\models\Account;
 use common\models\Promotion;
@@ -31,11 +32,11 @@ class PromotionController extends Controller
 		if(isset($_POST['save'])) {
 			$promotion->load($_POST);
 			$promotion->settings = $_POST['settings'];
-			
+            $promotion->is_paid_proxy=$_POST['is_paid_proxy'];
 			if($promotion->mode == $promotion::MODE_STABILIZE)
 				$promotion->settings['speed'] = 0;
-			
-			$promotion->save();
+            $promotion->save();
+
 		}
 		
 		if(isset($_POST['create_initial_tasks'])) 
@@ -206,17 +207,17 @@ class PromotionController extends Controller
 			$promotion->settings = $_POST['settings'];
 			$promotion->created_at = time();
 			$promotion->currency_one = 1;
-			
+			$promotion->is_paid_proxy = $_POST['is_paid_proxy'];
+
 			if($promotion->mode == $promotion::MODE_STABILIZE)
 				$promotion->settings['speed'] = 0;
 			
-			if($promotion->save())
+			if($promotion->save()){}
 				return $this->redirect("/market/". $_GET['market']);		
 				
 				
-			echo "<pre>";print_r($promotion);exit();
+
 		}
-		
 		return $this->render("view", ['promotion' => $promotion]);
 	}
 }

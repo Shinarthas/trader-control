@@ -117,8 +117,10 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 <form method="POST">
 	<p>Name: <input name="Promotion[name]" value="<?=$promotion->name?$promotion->name:"No name";?>"></p>
 	<p>Hour volume: <input name="settings[hour_volume]" value="<?=$promotion->settings['hour_volume']?$promotion->settings['hour_volume']:10;?>"> <?=$promotion->main_currency->symbol;?></p>
-
-	<p>mode: <select  name="Promotion[mode]"><? foreach($promotion::$modes as $value=>$mode) { $selected = ""; if($value == $promotion->mode['name']) {$selected = "selected";}  echo "<option value='".$value."' ".$selected.">".$mode['name']."</option>";}?></select></p>
+	<p>mode: <select  name="Promotion[mode]">
+            <? foreach($promotion::$modes as $value=>$mode) { $selected = ""; if($value == $promotion->mode) {$selected = "selected";}  echo "<option value='".$value."' ".$selected.">".$mode['name']."</option>";}?>
+        </select>
+    </p>
 <p>currency one: <select  name="Promotion[currency_one]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_one == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
 	<p>currency two: <select  name="Promotion[currency_two]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_two == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
 
@@ -149,6 +151,7 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 	<p>limit per account: <input name="settings[limit_per_account]" value="<?=(int)$promotion->settings['limit_per_account'];?>"></p>
 	<input type="hidden"  name="settings[only_day]" value="0">
 	<p>only day actions <input type="checkbox" name="settings[only_day]" <?=$promotion->settings['only_day']==1?"checked":"";?> value="1"></p>
+	<p>Use Paid Proxy? <input type="checkbox" name="is_paid_proxy" <?=$promotion->is_paid_proxy?"checked":"";?> value="1"></p>
 
 	
 	<input type="submit" value="Save" name="save">
