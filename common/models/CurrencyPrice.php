@@ -60,8 +60,8 @@ class CurrencyPrice extends \yii\db\ActiveRecord
             'market_id'=>$market_id,
             'currency_one'=>$currency_one,
             'currency_two'=>$currency_two,
-            'from'=>$from,
-            'to'=>$to,
+            'from'=>1000,
+            'to'=>0,
         ]);
         if ($res->status) {
 			$data = $res->data;

@@ -15,11 +15,11 @@
 					<div>
 						<?=$p->enabled==1?'<i class="fa fa-play"></i>':'<i class="fa fa-stop"></i>';?>
 						<span class="currencies"><?=$p->main_currency->symbol;?> / <?=$p->second_currency->symbol;?></span>
-						<a href="/promotion/<?=$p->id;?>"><?=$p->name; ?> <?=$p::$modes[$p->mode];?></a>
+						<a href="/promotion/<?=$p->id;?>"><?=$p->name; ?> <?=$p::$modes[$p->mode]['name'];?></a>
 						
 						<p style="float:right; display:inline-block;width:60px;text-align:right;font-size:13px;line-height:20px;"><?=date("M d",$p->created_at);?></p>
 						<? $errors = $p->errors_percent; ?>
-						<p style="float:right; display:inline-block;width:60px;text-align:right;font-size:13px;line-height:20px; <? if($errors>30) echo "color:red;";?>"><?=$errors;?>%</p>
+						<p style="float:right; display:inline-block;width:60px;text-align:right;font-size:13px;line-height:20px; <? if($errors>30) echo "color:red;";?>"><?=(int)$errors;?>%</p>
 						<p style="float:right; font-size:13px;line-height:20px;opacity:0.3;"><?=count($p->promotionAccounts);?></p>
 					<?/*	<p style="float:right; font-size:13px;line-height:20px;opacity:0.3;">25'666$<span style="margin-left:10px;">+1.5%</span></p>*/?>
 					</div>

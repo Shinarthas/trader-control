@@ -31,9 +31,9 @@ AppAsset::register($this);
 		}
 		#background{
 			background:url("/images/1.jpg");
-			height:100%;
+			 min-height: 100%;
 			width:100%;
-			position:absolute;
+			position:fixed;
 			z-index:-1;
 			filter:brightness(0.65);
 		}
@@ -41,7 +41,7 @@ AppAsset::register($this);
 			background: linear-gradient(-28deg, #161616, #2840387f, #161616);
 			height:100%;
 			width:100%;
-			position:absolute;
+			position:fixed;
 			z-index:-1;
 		}
 		* {
@@ -57,7 +57,7 @@ AppAsset::register($this);
     margin: 0 auto;
     background: rgba(27, 27, 27, 0.77);
 	
-    height: 800px;
+        min-height: 800px;
 	box-shadow: 7px 5px 12px 3px #00000055;
 			padding:0;
 		}

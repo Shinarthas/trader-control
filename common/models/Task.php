@@ -152,9 +152,8 @@ class Task extends \yii\db\ActiveRecord
 		$this->account_id = $account->id;
 		
 		$this->tokens_count = $tokens_count;
-		$this->tokens_count = 120;
 
-		$result = ApiRequest::accounts('v1/orders/create', 
+  	$result = ApiRequest::accounts('v1/orders/create', 
 			[
 			'id'=>$this->id,
 			'sell'=>$this->sell,

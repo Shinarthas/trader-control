@@ -48,4 +48,9 @@ class AccountController extends Controller
                 'account_types'=>self::$account_types
             ]);
 	}
+	
+	public function actionView($id) {
+		$a = Account::findOne($id);
+		return $this->render("view", ['a'=>$a]);
+	}
 }
