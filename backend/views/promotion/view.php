@@ -46,7 +46,10 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 	<p>Name: <input name="Promotion[name]" value="<?=$promotion->name?$promotion->name:"No name";?>"></p>
 	<p>Hour volume: <input name="settings[hour_volume]" value="<?=$promotion->settings['hour_volume']?$promotion->settings['hour_volume']:10;?>"> <?=$promotion->main_currency->symbol;?></p>
 
-	<p>mode: <select  name="Promotion[mode]"><? foreach($promotion::$modes as $value=>$mode) { $selected = ""; if($value == $promotion->mode->name) {$selected = "selected";}  echo "<option value='".$value."' ".$selected.">".$mode['name']."</option>";}?></select></p>
+	<p>mode: <select  name="Promotion[mode]">
+            <? foreach($promotion::$modes as $value=>$mode) { $selected = ""; if($value == $promotion->mode) {$selected = "selected";}  echo "<option value='".$value."' ".$selected.">".$mode['name']."</option>";}?>
+        </select>
+    </p>
 <p>currency one: <select  name="Promotion[currency_one]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_one == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
 	<p>currency two: <select  name="Promotion[currency_two]"><? foreach($currencies as $c) { $selected = ""; if($promotion->currency_two == $c->id) {$selected = "selected";}  echo "<option value='".$c->id."' ".$selected.">".$c->symbol."</option>";}?></select></p>
 

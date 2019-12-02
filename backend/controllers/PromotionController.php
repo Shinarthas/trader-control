@@ -35,8 +35,7 @@ class PromotionController extends Controller
             $promotion->is_paid_proxy=$_POST['is_paid_proxy'];
 			if($promotion->mode == $promotion::MODE_STABILIZE)
 				$promotion->settings['speed'] = 0;
-			
-			$promotion->save();
+            $promotion->save();
 
 		}
 		

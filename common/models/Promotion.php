@@ -49,7 +49,7 @@ class Promotion extends \yii\db\ActiveRecord
 		self::MODE_USER_SIMULATOR => ['name'=>'user simulator','hidden_fields'=>['speed']],
 		self::MODE_FAST_VOLUME => ['name'=>'fast volume increase','hidden_fields'=>['frequency']],
 		self::MODE_VOLUME_INCREASE => ['name'=>'smart volume increase','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
-		self::MODE_PERCENT_EARN => ['name'=>'2% earning','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
+		self::MODE_PERCENT_EARN => ['name'=>'2% earning','hidden_fields'=>[]],
 		self::MODE_FAST_EARN => ['name'=>'1% earning','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
 		self::MODE_SAFE_EXIT => ['name'=>'safe exit','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
 		self::MODE_JUST_BUY => ['name'=>'just buy','hidden_fields'=>['fixed_tasks_currency_one','fixed_tasks_currency_two']],
@@ -278,7 +278,7 @@ class Promotion extends \yii\db\ActiveRecord
 
         $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
 		if(!$res->status){
-            //TODO:log error
+            Log::log($res);
         }
 
 

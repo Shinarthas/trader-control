@@ -104,6 +104,7 @@ class Task extends \yii\db\ActiveRecord
 	
 	
 	public function make() {
+
 		$this->status = self::STATUS_STARTED;
 	
 		$promotion = $this->promotion;
@@ -117,6 +118,7 @@ class Task extends \yii\db\ActiveRecord
 			$this->save();
 			return false;
 		}
+
 		if($promotion->market_id==4)
 		{
 			if($promotion->second_currency->data['pangu_step']==10)
@@ -165,7 +167,6 @@ class Task extends \yii\db\ActiveRecord
 			'rate' => $this->rate,
 			'use_paid_proxy' => $this->promotion->is_paid_proxy,
 			]);
-
 		if($result->status) {
 			$this->status = self::STATUS_CREATED;
 			//$this->progress = 100;
@@ -185,12 +186,9 @@ class Task extends \yii\db\ActiveRecord
 	
 	public function calculateRate() {
 		$promotion = $this->promotion;
-		if(!$price = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 300,0))
-			return false;
+		if(!$price = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 600,0))
+            return false;
 
-
-		//if(!$price = CurrencyPrice::currentPrice(1, $promotion->currency_one, $promotion->currency_two))
-		//		return false;
 		$timeout = 900;
 		
 		if($promotion->market_id==2)
@@ -263,10 +261,10 @@ class Task extends \yii\db\ActiveRecord
 			$buy_rate  = 1 - ($promotion->settings['earn_percent']/100);
 				
 			$rand_again = rand(0,10);
+			if(!$currency = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 600,0)){
+			    return false;
+            }
 
-			if(!$currency = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 3000,2000))
-				return false;
-					
 			if($this->sell == 1) {
 				$this->rate = $price->buy_price*$sell_rate < $price->sell_price - $small_difference ? $price->sell_price - $small_difference : $price->buy_price*$sell_rate;
 			
@@ -306,7 +304,7 @@ class Task extends \yii\db\ActiveRecord
 			$buy_rate+= $small_rand;
 			
 
-			if(!$currency = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 3000, 2000))
+			if(!$currency = CurrencyPrice::currentPrice($promotion->market_id, $promotion->currency_one, $promotion->currency_two, 600, 0))
 				return false;
 					
 			if($this->sell == 1) {
@@ -334,15 +332,14 @@ class Task extends \yii\db\ActiveRecord
 			else
 				$this->rate = $price->sell_price * $increase_rate * (1 + $random_pump_dupm);
 		}
-        print_r($price);
-	    echo $this->rate; die();
 		$this->rate = round($this->rate,5);
 		return true;
 	}
 	
 	public function cancelOrder() {
         $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => $this->promotion->is_paid_proxy, ]);
-		if($res->status){
+		print_r($res);
+        if($res->status){
             $this->canceled = 1;
             $this->save();
         }
