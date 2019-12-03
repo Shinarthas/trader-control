@@ -222,9 +222,12 @@ AppAsset::register($this);
 			<br>
 			<div id="servers-status">
 				<h4>Servers status:</h4>
-				<p>This server - <b>OK</b></p>
-				<p>Accounts - <b>OK</b></p>
-				<p>Statistic - <b>OK</b></p>
+                <?php $control=\common\components\ApiRequest::control('v1/test/index',[]);?>
+				<p>This server - <?= $control->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?></p>
+                <?php $accounts=\common\components\ApiRequest::accounts('v1/test/index',[]);?>
+				<p>Accounts - <?= $accounts->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?></p>
+                <?php $statistics=\common\components\ApiRequest::statistics('v1/test/index',[]);?>
+				<p>Statistic - <?= $accounts->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?></p>
 			</div>
 		</div>
         <?php // show errors if there any ?>

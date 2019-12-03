@@ -162,6 +162,7 @@ class Task extends \yii\db\ActiveRecord
 			'currency_two' => $promotion->currency_two, 
 			'account_id' => $this->account_id,
 			'tokens_count' => $this->tokens_count,
+			'created_at' => $this->created_at,
 			'promotion_id' => $this->promotion_id,
 			'rate' => $this->rate,
 			'use_paid_proxy' => $this->promotion->is_paid_proxy,
@@ -337,10 +338,12 @@ class Task extends \yii\db\ActiveRecord
 	
 	public function cancelOrder() {
         $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => $this->promotion->is_paid_proxy, ]);
-		print_r($res);
         if($res->status){
+            $this->status=Task::STATUS_CANCELED;
             $this->canceled = 1;
             $this->save();
+            $res1=ApiRequest::statistics('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status]);
+
         }
 
 		return $res;
