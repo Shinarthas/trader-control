@@ -74,7 +74,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
     require(['jquery', 'iguanachart'], function ($) {
         iChartDataSource.host = "<?=\Yii::$app->params['statistics-api-url'];?>/v1/promotion/graph/<?=$promotion->id;?>";
 	//	iChartDataSource.host = "https://beta.tradernet.ru";
-
+        console.log(iChartDataSource);
         $('.iChart').iguanaChart(
                 {
                     ticker: "<?=$promotion->main_currency->symbol;?> - <?=$promotion->second_currency->symbol;?>",

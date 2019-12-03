@@ -1,6 +1,7 @@
 <?php
 namespace backend\controllers;
 
+use common\components\ApiRequest;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
@@ -24,11 +25,10 @@ class PromotionController extends Controller
 
 		return parent::beforeAction($action);
 	}
-	
+
 	public function actionView($id) {
 		
 		$promotion = Promotion::findOne($id);
-		
 		if(isset($_POST['save'])) {
 			$promotion->load($_POST);
 			$promotion->settings = $_POST['settings'];
@@ -50,7 +50,13 @@ class PromotionController extends Controller
 		
 		return $this->render("view", ['promotion' => $promotion]);
 	}
-	
+    public function actionGraph2($id){
+        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+        $data=Yii::$app->request->get();
+        $data['promotion_id']=$id;
+        $res=ApiRequest::statistics('v1/promotion/graph',$data);
+        print_r($res);
+    }
 	public function actionGraph($id) {
 		\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 		

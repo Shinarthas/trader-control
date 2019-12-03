@@ -12,6 +12,7 @@ class AccountController extends Controller
         ['name'=>'TRX Account','id'=>1],
         ['name'=>'Tron Trade Account','id'=>2],
         ['name'=>'Binance Account','id'=>3,'json_fields'=>['api_key','secret']],
+        ['name'=>'Poloniex Account','id'=>5,'json_fields'=>['api_key','secret']],
     ];
 	public function beforeAction($action)
 	{            
