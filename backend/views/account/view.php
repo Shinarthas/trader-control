@@ -1,5 +1,11 @@
 <?
+/* @var $this yii\web\View */
+/* @var $a common\models\Account */
+/* @var $account_types array */
+
 	use common\components\ApiRequest;
+use yii\web\View;
+
 ?>
 <style>
 table tr>th {
@@ -27,7 +33,32 @@ table tr>* {
 
     }
 ?>
+<form method="POST">
+    <input type="hidden" name="id" value="<?=$a->id?>">
+    <?php $account_index=array_search($a->type,array_column($account_types,'id')) ?>
+    <?php foreach ($account_types[$account_index]['json_fields'] as $ap){ ?>
+        <p><?=$ap?>: <input name="data[<?=$ap?>]"></p>
+    <?php }?>
+    <p>Account label: <input name="label"  value="<?=$a->label?>"></p>
+    <p>Account name: <input name="name" value="<?=$a->name?>"></p>
+    <p>Account password: <input name="password"></p>
+<p>Check balance:
+    <select name="check_balance">
+        <option value="1" <?=$a->check_balance? 'selected':''?>>Enabled</option>
+        <option value="0" <?=!$a->check_balance? 'selected':''?>>Disabled</option>
+    </select>
+</p>
 
+
+<p>
+    <button class="btn-primary btn">Update Balance</button>
+</p>
+</form>
+
+
+<br>
+<br>
+<br>
 <table>
 	<tr>
 		<th rowspan = 2>time</th>

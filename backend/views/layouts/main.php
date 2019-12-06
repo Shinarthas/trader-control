@@ -214,6 +214,7 @@ AppAsset::register($this);
 			<a href="/">Markets</a>
 			<a href="/account">Accounts</a>
 			<a href="/currency">Currencies</a>
+			<a href="/logs">Logs</a>
 			<a>Statistic</a>
 			<a>Settings</a>
 			<a>Help</a>
@@ -222,12 +223,12 @@ AppAsset::register($this);
 			<br>
 			<div id="servers-status">
 				<h4>Servers status:</h4>
-                <?php $control=\common\components\ApiRequest::control('v1/test/index',[]);?>
-				<p>This server - <?= $control->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?></p>
-                <?php $accounts=\common\components\ApiRequest::accounts('v1/test/index',[]);?>
-				<p>Accounts - <?= $accounts->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?></p>
-                <?php $statistics=\common\components\ApiRequest::statistics('v1/test/index',[]);?>
-				<p>Statistic - <?= $accounts->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?></p>
+                <?php $t0= microtime(true); $control=\common\components\ApiRequest::control('v1/test/index',[]); $t1= microtime(true);?>
+				<p>This server - <?= $control->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?> <?= number_format($t1-$t0,3)?></p>
+                <?php $t0= microtime(true); $accounts=\common\components\ApiRequest::accounts('v1/test/index',[]); $t1= microtime(true);?>
+				<p>Accounts - <?= $accounts->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?> <?= number_format($t1-$t0,3)?></p>
+                <?php $t0= microtime(true); $statistics=\common\components\ApiRequest::statistics('v1/test/index',[]); $t1= microtime(true);?>
+				<p>Statistic - <?= $accounts->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?> <?= number_format($t1-$t0,3)?></p>
 			</div>
 		</div>
         <?php // show errors if there any ?>

@@ -146,13 +146,12 @@ class Promotion extends \yii\db\ActiveRecord
 	}
 
 	public function createHourTasks($start_time, $day_tasks = false) {
-
+        echo $this->id;
 		$multiply = 60;
 		if($day_tasks)
 			$multiply = 60*24;
 
 		$currency_overflow_rate = 1;
-
 		$count_tasks_limits = preg_split('|\-|',Promotion::$frequency_variants[$this->settings['frequency']]);
 		if($count_tasks_limits[1] == 0)
 			$count_tasks = $count_tasks_limits[0];
@@ -278,7 +277,6 @@ class Promotion extends \yii\db\ActiveRecord
 	public function checkPrice() {
 
         $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
-
 		if(!$res->status){
             Log::log($res);
         }

@@ -21,6 +21,12 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 	<p>Account label: <input name="label"></p>
 	<p>Account name: <input name="name"></p>
 	<p>Account password: <input name="password"></p>
+    <p>Check balance:
+        <select name="check_balance">
+            <option value="1">Enabled</option>
+            <option value="0">Disabled</option>
+        </select>
+    </p>
 	<input type="submit" value="add" name="add">
 
 </form>

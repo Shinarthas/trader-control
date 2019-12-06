@@ -10,6 +10,7 @@ use Yii;
  *
  * @property int $id
  * @property int $type
+ * @property int $check_balance
  * @property string $name
  */
 class Account extends \yii\db\ActiveRecord
@@ -29,7 +30,7 @@ class Account extends \yii\db\ActiveRecord
     {
         return [
             [['type', 'name'], 'required'],
-            [['type'], 'integer'],
+            [['type','check_balance'], 'integer'],
             [['name','label'], 'string', 'max' => 255],
         ];
     }
@@ -42,6 +43,7 @@ class Account extends \yii\db\ActiveRecord
         return [
             'id' => 'ID',
             'type' => 'Type',
+            'check_balance' => 'Check balance for this Account',
             'name' => 'Name',
         ];
     }

@@ -152,7 +152,6 @@ class Task extends \yii\db\ActiveRecord
 		$this->account_id = $account->id;
 		
 		$this->tokens_count = $tokens_count;
-
   	$result = ApiRequest::accounts('v1/orders/create', 
 			[
 			'id'=>$this->id,
@@ -167,6 +166,7 @@ class Task extends \yii\db\ActiveRecord
 			'rate' => $this->rate,
 			'use_paid_proxy' => $this->promotion->is_paid_proxy,
 			]);
+  	print_r($result);
 		if($result->status) {
 			$this->status = self::STATUS_CREATED;
 			//$this->progress = 100;

@@ -2,6 +2,7 @@
 namespace console\controllers;
 
 use api\v1\renders\ResponseRender;
+use common\models\Log;
 use Yii;
 use yii\helpers\Console;
 use yii\console\Controller;
@@ -53,9 +54,10 @@ class AutoController extends Controller
 	}
 	
 	public function actionCreateHourTasks() {
+        set_error_handler(array(new Log(), 'logError'));//process errors
 		foreach(Promotion::find()->where(['enabled'=>1])->all() as $promotion)
 		{
-			if($promotion->settings['day_tasks']==0)
+			if(!isset($promotion->settings['day_tasks']) ||  $promotion->settings['day_tasks']==0)
 				$promotion->createHourTasks(time());
 			else
 			{

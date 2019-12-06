@@ -25,6 +25,14 @@ class Log extends Model
         if($message)
             $data['message']=$type;
         $data['from']='control';
-        return ApiRequest::statistics('v1/log',$data);
+        return ApiRequest::statistics('v1/log/index',$data);
+    }
+
+    //called as php error handler
+    public function logError(){
+        $data=func_get_args();
+        $data['from']='control';
+        $res= ApiRequest::statistics('v1/log/index',$data);
+        return $res;
     }
 }
