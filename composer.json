@@ -20,7 +20,7 @@
         "yiisoft/yii2-swiftmailer": "~2.0.0 || ~2.1.0",
         "jaggedsoft/php-binance-api": "dev-master",
         "dzarezenko/poloniex-api": "dev-master",
-        "hitbtc-com/hitbtc-php-sdk": "dev-master"
+        "guzzlehttp/guzzle": "^7.0@dev"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

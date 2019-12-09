@@ -118,7 +118,6 @@ class Task extends \yii\db\ActiveRecord
 			$this->save();
 			return false;
 		}
-
 		if($promotion->market_id==4)
 		{
 			if($promotion->second_currency->data['pangu_step']==10)
@@ -166,7 +165,6 @@ class Task extends \yii\db\ActiveRecord
 			'rate' => $this->rate,
 			'use_paid_proxy' => $this->promotion->is_paid_proxy,
 			]);
-  	print_r($result);
 		if($result->status) {
 			$this->status = self::STATUS_CREATED;
 			//$this->progress = 100;
@@ -174,7 +172,7 @@ class Task extends \yii\db\ActiveRecord
             if(isset($result->data->external_id)){
                 $this->external_id=$result->data->external_id;
             }
-            //update same info on statistics server
+            //update same info on statistics serve
             $resultStatistics = ApiRequest::statistics('v1/orders/create',
                 ArrayHelper::toArray($this));
 		}

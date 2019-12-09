@@ -16,7 +16,8 @@ class TestController extends Controller
 {
 	public function actionCancel($id){
 	    $task=Task::findOne($id);
-	    $task->cancelOrder();
+	    $res=$task->cancelOrder();
+	    print_r($res);
     }
 
     public function actionPrice(){

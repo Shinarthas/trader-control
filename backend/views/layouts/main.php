@@ -221,15 +221,7 @@ AppAsset::register($this);
 			<a>My profile</a>
 			
 			<br>
-			<div id="servers-status">
-				<h4>Servers status:</h4>
-                <?php $t0= microtime(true); $control=\common\components\ApiRequest::control('v1/test/index',[]); $t1= microtime(true);?>
-				<p>This server - <?= $control->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?> <?= number_format($t1-$t0,3)?></p>
-                <?php $t0= microtime(true); $accounts=\common\components\ApiRequest::accounts('v1/test/index',[]); $t1= microtime(true);?>
-				<p>Accounts - <?= $accounts->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?> <?= number_format($t1-$t0,3)?></p>
-                <?php $t0= microtime(true); $statistics=\common\components\ApiRequest::statistics('v1/test/index',[]); $t1= microtime(true);?>
-				<p>Statistic - <?= $accounts->status?"<b>OK</b>":"<b style='color:darkred'>Off</b>"?> <?= number_format($t1-$t0,3)?></p>
-			</div>
+
 		</div>
         <?php // show errors if there any ?>
         <?php if (Yii::$app->session->hasFlash('log')): ?>

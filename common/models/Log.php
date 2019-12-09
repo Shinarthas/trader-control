@@ -20,6 +20,7 @@ class Log extends Model
 {
 
     public static function log($data,$type=false,$message=false){
+        $data=json_decode(json_encode($data),true);
         if($type)// error, info, warning
             $data['type']=$type;
         if($message)

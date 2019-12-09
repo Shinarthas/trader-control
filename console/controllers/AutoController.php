@@ -28,11 +28,13 @@ class AutoController extends Controller
         $promotions_active = Promotion::find()->all();
 
 		$last_currency_two = 0;
+        $last_market_id = 0;
 		foreach($promotions_active as $p) {
-			if($last_currency_two == $p->currency_two)
+			if($last_currency_two == $p->currency_two && $last_market_id==$p->market_id)
 				continue;
 			$p->checkPrice();//это чтоб не делать чек курсса одной валюты много раз?
 			$last_currency_two = $p->currency_two;
+            $last_market_id = $p->market_id;
 		}
 		
 		foreach($tasks as $t) {
@@ -50,7 +52,8 @@ class AutoController extends Controller
 	
 	public function actionCheckPrice($id) {
 		$p = Promotion::findOne($id);
-		$p->checkPrice();
+		$res=$p->checkPrice();
+		print_r($res);
 	}
 	
 	public function actionCreateHourTasks() {
