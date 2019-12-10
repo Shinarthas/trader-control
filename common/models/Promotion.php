@@ -280,9 +280,8 @@ class Promotion extends \yii\db\ActiveRecord
 		if(!$res->status){
             Log::log($res);
         }
-
-
-		$data = json_decode(json_encode($res->data),true);
+        return $res;
+		//$data = json_decode(json_encode($res->data),true);
 
 		//uncomment  if you decide to save it on this server
 	/*	$exchanger = '\\common\\components\\' .$this->market->class;

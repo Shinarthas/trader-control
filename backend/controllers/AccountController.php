@@ -15,6 +15,7 @@ class AccountController extends Controller
         ['name'=>'Binance Account','id'=>3,'json_fields'=>['api_key','secret']],
         ['name'=>'Poloniex Account','id'=>5,'json_fields'=>['api_key','secret']],
         ['name'=>'HitBTC Account','id'=>6,'json_fields'=>['api_key','secret']],
+        ['name'=>'Okex Account','id'=>7,'json_fields'=>['api_key','secret','password']],
     ];
 	public function beforeAction($action)
 	{            
@@ -63,8 +64,6 @@ class AccountController extends Controller
             $a2->check_balance = $_POST['check_balance'];
             $a2->label = $_POST['label'];
             $a2->save();
-            print_r($res);
-            print_r($a2->errors);
             if(empty($a2->errors))
                 $a=$a2;
         }
