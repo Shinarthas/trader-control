@@ -43,7 +43,19 @@ class TestController extends Controller
 	    print_r($res);
     }
     public function actionGraph(){
-	    $res=ApiRequest::statistics('v1/promotion/graph',['promotion_id'=>5,'candles'=>24]);
+	    $data=[
+	        'id'=>"TRX",
+            'timeframe'=>60,
+            'date_from'=>'30.10.2019',
+            'date_to'=>'30.12.2019',
+            'promotion_id'=>5
+        ];
+	    $res=ApiRequest::statistics('v1/promotion/graph',$data);
 	    print_r($res);
+    }
+
+    public function actionPromotion($task_id){
+	    $task=Task::findOne($task_id);
+	    print_r($task->promotion);
     }
 }
