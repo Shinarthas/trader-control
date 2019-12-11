@@ -83,8 +83,6 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                     lib_path: "/dist",
                     chartOptions: {
                         minHeight: 500,
-                        showVolume: 'inside',
-                        uiTools: {top: true}
                     },
                     dataSource: $.extend(true, {}, iChartDataSource)
                 }

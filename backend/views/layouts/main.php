@@ -22,6 +22,7 @@ AppAsset::register($this);
     <?php $this->registerCsrfMetaTags() ?>
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
+	
 	<style>
 		body{
 			 background:#050505;
@@ -161,11 +162,11 @@ AppAsset::register($this);
 		#servers-status b {
 			color:#00c800;
 		}
-		.content>.list {
+		.content>.list, .smart-list {
 			margin:5px;
 			margin: 13px;
 		}
-		.content>.list>div {
+		.content>.list>div, .smart-list>div {
 			padding: 7px 17px;
 			margin: 4px 4px 8px;
 			background: rgba(0,0,0,0.2);
@@ -175,7 +176,7 @@ AppAsset::register($this);
 			margin-right:6px;
 		}
 		
-		.content>.list>div .currencies {
+		.content>.list>div .currencies, .smart-list>div  .currencies{
 			display:inline-block;
 			width:80px;
 			font-size:12px;
