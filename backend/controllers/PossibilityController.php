@@ -2,6 +2,7 @@
 namespace backend\controllers;
 
 use Codeception\Template\Api;
+use common\assets\Hitbtc\Model\Order;
 use common\components\ApiRequest;
 use Yii;
 use yii\helpers\ArrayHelper;
@@ -30,6 +31,13 @@ class PossibilityController extends Controller
 	public function actionIndex(){
 	    $possibilityTable=ApiRequest::statistics('v1/possibility/current',[]);
 
-        return $this->render("index", ['possibility' => $possibilityTable->data]);
+	    $promotions_ids=[];
+	    foreach ($possibilityTable->data as $promotion){
+            $promotions_ids[]=$promotion->id;
+        }
+
+	    $orders=Task::find()->andWhere(['in', 'promotion_id',$promotions_ids])->orderBy('id desc')->limit(20)->all();
+	    //print_r(ArrayHelper::toArray($orders));
+        return $this->render("index", ['possibility' => $possibilityTable->data,'orders'=>$orders]);
     }
 }

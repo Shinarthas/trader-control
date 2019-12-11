@@ -1,5 +1,11 @@
 # Проект Trader
 
+###cron задачи
+
+    * * * * * php /var/www/[dir_name]/yii auto
+    * * * * * php /var/www/[dir_name]/yii auto/
+    0 * * * * php /var/www/[dir_name]/yii auto/create-hour-tasks
+    * * * * * php /var/www/[dir_name]/yii auto/possibility-task
 
 ## Немного о проекте
 
