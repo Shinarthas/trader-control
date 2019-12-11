@@ -27,4 +27,8 @@ class MarketController extends Controller
 		
         return $this->render('view', ['market'=>$market]);
     }
+	
+	public function actionCampaign() {
+		return $this->render("campaign");
+	}
 }
