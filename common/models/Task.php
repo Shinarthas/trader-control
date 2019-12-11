@@ -181,6 +181,92 @@ class Task extends \yii\db\ActiveRecord
 		
 		return $result;
 	}
+
+	public static function possibility(Promotion $promotion){
+
+        $account = $promotion->accounts[array_rand($promotion->accounts,1)];
+
+
+        //получим текущий  баланс
+        $balance = ApiRequest::statistics('v1/account/get-balance-now', ['id'=>$account->id]);
+        // получим валюту которую мы хотим продать в долларах
+        $currency_one_usdt_rate=ApiRequest::statistics('v1/currency/usdt-rate',['id'=>$promotion->currency_one]);
+        //а почем ее продают сейчас?
+        $exchange_rates=ApiRequest::statistics('v1/exchange-course/get-course',
+            [
+                'market_id'=>$promotion->market_id,
+                'currency_one'=>$promotion->currency_one,
+                'currency_two'=>$promotion->currency_two,
+            ]);
+
+        $how_many_usdt_we_need=$balance->data->in_usd*$promotion->settings['maximal_stake']/100;
+        //find our currency;
+        $amount_free=0;
+        $amount_in_orders=0;
+        foreach ($balance->data->balances as $currency_balance){
+            if($currency_balance->currency_id==$promotion->currency_one){
+                $amount_free=$currency_balance->value;
+                $amount_in_orders=$currency_balance->value_in_orders;
+            }
+
+        }
+        $how_many_usdt_we_have=$amount_free*$currency_one_usdt_rate->data->rate;
+        $how_many_usdt_we_have_in_orders=$amount_in_orders*$currency_one_usdt_rate->data->rate;
+
+        //проверка поставили ли мы уже этот ордер?
+        if($how_many_usdt_we_have_in_orders>$how_many_usdt_we_need)
+            return;
+
+        if ($how_many_usdt_we_have_in_orders+$how_many_usdt_we_have>=$how_many_usdt_we_need && $how_many_usdt_we_have<$how_many_usdt_we_need){
+            //у нас есть столько денег но они в ордерах, нужноих  отменить
+            // или ты уже поставил эти ордера
+            echo 'gavno';
+            //return;
+            //sleep(3);//чтоб ордер точно прошел
+        }
+        if($how_many_usdt_we_need>$how_many_usdt_we_have){
+            //у нас нет столько нужно купить
+            $how_many_we_need_to_buy=($how_many_usdt_we_need-$how_many_usdt_we_have)*1.01;
+            $task=new Task();
+            $task->account_id = $account->id;
+            $task->promotion_id=$promotion->id;
+            $task->status=0;
+            $task->sell=0;
+            $task->rate=$exchange_rates->data->sell_price*1.002;// 10%
+            $task->tokens_count=$how_many_we_need_to_buy;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+            $task->random_curve=0;
+            $task->value=intval($task->tokens_count*$task->rate);
+            $task->progress=0;
+            $task->time=time();
+
+            $task->save();
+            echo $task->id;
+
+            $task->make();
+
+            sleep(3);//чтоб ордер точно прошел
+        }
+        $task=new Task();
+        $task->account_id = $account->id;
+        $task->promotion_id=$promotion->id;
+        $task->status=0;
+        $task->sell=1;
+        $task->rate=$exchange_rates->data->sell_price*1.10;// 10%
+        $task->tokens_count=$how_many_usdt_we_need/$exchange_rates->data->sell_price;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+        $task->random_curve=0;
+        $task->value=intval($task->tokens_count*$task->rate);
+        $task->progress=0;
+        $task->time=time();
+
+        $task->save();
+        echo $task->id;
+
+        $task->make();
+
+        // поставить ордер
+
+
+    }
 	
 	public function calculateRate() {
 		$promotion = $this->promotion;

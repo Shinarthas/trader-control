@@ -37,7 +37,8 @@ class Promotion extends \yii\db\ActiveRecord
 	const MODE_PERCENT_EARN = 5;
 	const MODE_FAST_EARN = 6;
 	const MODE_PUMP_DUMP = 7;
-	
+	const MODE_POSSIBILITY = 8;
+
 	// don't create buy orders, equal to MODE_PERCENT_EARN
 	const MODE_SAFE_EXIT = 10;
 	
@@ -54,6 +55,7 @@ class Promotion extends \yii\db\ActiveRecord
 		self::MODE_SAFE_EXIT => ['name'=>'safe exit','hidden_fields'=>['speed','price_stabilize_power','fixed_tasks_currency_one','fixed_tasks_currency_two']],
 		self::MODE_JUST_BUY => ['name'=>'just buy','hidden_fields'=>['speed','price_stabilize_power','fixed_tasks_currency_one','fixed_tasks_currency_two']],
 		self::MODE_PUMP_DUMP => ['name'=>'pumping/dumping','hidden_fields'=>['speed','earn_percent','price_stabilize_power','fixed_tasks_currency_one','fixed_tasks_currency_two']],
+		self::MODE_POSSIBILITY => ['name'=>'possibility related ','hidden_fields'=>[]],
 	];
 		public static $frequency_variants = [
 			'1',

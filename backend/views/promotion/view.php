@@ -152,6 +152,8 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 	<input type="hidden"  name="settings[only_day]" value="0">
 	<p>only day actions <input type="checkbox" name="settings[only_day]" <?=$promotion->settings['only_day']==1?"checked":"";?> value="1"></p>
 	<p>Use Paid Proxy? <input type="checkbox" name="is_paid_proxy" <?=$promotion->is_paid_proxy?"checked":"";?> value="1"></p>
+	<p>Minimal Percent <input  name="settings[minimal_percent]"  value="<?=$promotion->settings['minimal_percent']?$promotion->settings['minimal_percent']:0;?>"></p>
+	<p>Maximal Stake <input  name="settings[maximal_stake]"  value="<?=$promotion->settings['maximal_stake']?$promotion->settings['maximal_stake']:0;?>"></p>
 
 	
 	<input type="submit" value="Save" name="save">

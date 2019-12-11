@@ -2,6 +2,7 @@
 namespace console\controllers;
 
 use api\v1\renders\ResponseRender;
+use common\components\ApiRequest;
 use common\models\Log;
 use Yii;
 use yii\helpers\Console;
@@ -17,7 +18,8 @@ class AutoController extends Controller
 		
 		$promotions_active = [];
 		
-		$tasks = Task::find()->with(['promotion', 'promotion.market', 'promotion.accounts'])->where(['<=','time',time()])->andWhere(['>=','time',time()-600])->andWhere(['status'=>Task::STATUS_NEW])->orderBy("time")->limit(8)->all();
+		$tasks = Task::find()->with(['promotion', 'promotion.market', 'promotion.accounts'])->where(['<=','time',time()])->andWhere(['>=','time',time()-600])
+            ->andWhere(['status'=>Task::STATUS_NEW])->orderBy("time")->limit(8)->all();
 
 		if(date("i",time())%10==0)//что? зачем?
 			$promotions_active = Promotion::find()->all();
@@ -42,6 +44,19 @@ class AutoController extends Controller
 				$t->make();
 		}
 	}
+	public function actionPossibilityTask(){
+	    //getting chances for promotions
+        $possibilityTable=ApiRequest::statistics('v1/possibility/current',[]);
+        foreach ($possibilityTable->data as $possibility){
+
+            $promotion=Promotion::findOne($possibility->promotion_id);
+            if($promotion->enabled && $promotion->mode==Promotion::MODE_POSSIBILITY &&
+                $possibility->chance>=$promotion->settings['minimal_percent'])
+                    Task::possibility($promotion);
+
+
+        }
+    }
 	
 	public function actionMakeTask($id) {
 		$task = Task::findOne($id);  
@@ -58,7 +73,7 @@ class AutoController extends Controller
 	
 	public function actionCreateHourTasks() {
         set_error_handler(array(new Log(), 'logError'));//process errors
-		foreach(Promotion::find()->where(['enabled'=>1])->all() as $promotion)
+		foreach(Promotion::find()->where(['enabled'=>1])->andWhere(['not in', 'mode',[Promotion::MODE_POSSIBILITY]])->all() as $promotion)
 		{
 			if(!isset($promotion->settings['day_tasks']) ||  $promotion->settings['day_tasks']==0)
 				$promotion->createHourTasks(time());
