@@ -12,11 +12,20 @@
 
 			<div style="width:724px;" class="list">
 				<? foreach($market->promotions as $p) :?>
-					<div>
+					<?php $promotion_statistics=\common\components\ApiRequest::statistics('v1/promotion/get-statistics',['id'=>$p->id])?>
+                    <div>
 						<?=$p->enabled==1?'<i class="fa fa-play"></i>':'<i class="fa fa-stop"></i>';?>
 						<span class="currencies"><?=$p->main_currency->symbol;?> / <?=$p->second_currency->symbol;?></span>
 						<a href="/promotion/<?=$p->id;?>"><?=$p->name; ?> <?=$p::$modes[$p->mode]['name'];?></a>
-						
+						<?php if(!empty($promotion_statistics->data->now)){ ?>
+                            <span>$: <?= $promotion_statistics->data->now->usdt_balance ?>
+                            <?php if(!empty($promotion_statistics->data->day_ago)){ echo ($promotion_statistics->data->now->usdt_balance-$promotion_statistics->data->day_ago->usdt_balance)/$promotion_statistics->data->now->usdt_balance ;}?>
+                            </span>
+
+                            <span>(24h): <?= $promotion_statistics->data->now->{'24h_usdt'} ?>
+                                <?php if(!empty($promotion_statistics->data->day_ago)){ echo ($promotion_statistics->data->now->{'24h_usdt'}-$promotion_statistics->data->day_ago->{'24h_usdt'})/$promotion_statistics->data->now->{'24h_usdt'} ;}?>
+                            </span>
+						<?php } ?>
 						<p style="float:right; display:inline-block;width:60px;text-align:right;font-size:13px;line-height:20px;"><?=date("M d",$p->created_at);?></p>
 						<? $errors = $p->errors_percent; ?>
 						<p style="float:right; display:inline-block;width:60px;text-align:right;font-size:13px;line-height:20px; <? if($errors>30) echo "color:red;";?>"><?=(int)$errors;?>%</p>

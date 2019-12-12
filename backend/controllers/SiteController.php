@@ -49,6 +49,10 @@ class SiteController extends Controller
     public function actionIndex()
     {
 		$markets = Market::find()->all();
+		foreach ($markets as &$market){
+		    $res=ApiRequest::statistics('v1/market/get-statistics',['id'=>$market->id]);
+		    $market->statistics=$res->data;
+        }
 		
         return $this->render('index', ['markets'=>$markets]);
     }

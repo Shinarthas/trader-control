@@ -6,6 +6,9 @@
 	
 	$currencies = Currency::find()->all();
 $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
+function rand_color() {
+    return '#' . str_pad(dechex(mt_rand(0, 0xFFFFFF)), 6, '0', STR_PAD_LEFT);
+}
 ?>
 
 <style>
@@ -15,6 +18,33 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 			border-bottom: 1px solid #888;
 		}
 </style>
+<style>
+    table tr>* {
+        border:1px solid #eee;
+        padding:3px 10px;
+        min-width:75px;
+        text-align:center;
+    }
+    .listtopie-link {
+        font-size:16px;
+        margin: 3px 10px;
+    }
+    h4 {
+        margin-bottom:20px;
+        font-size:20px;
+    }
+    td.red {
+        color:red;
+    }
+    td.green {
+        color:#00d400;
+    }
+</style>
+<link rel="stylesheet" href="/css/jquery.listtopie.css">
+
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg-min.js"></script>
+<script src="/js/jquery.listtopie.min.js"></script>
 
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.js"></script>
     <script type="text/javascript" src="/dependencies/i18n/i18n.en.js"></script>
@@ -111,6 +141,24 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 <?=$promotion->enabled==1?'enabled':'disabled';?>
 
 <h3></h3>
+    <?php print_r($statistics->data->now->balances);?>
+    <div class="row">
+        <div class="col-md-6">
+            <p>Chart</p>
+            <div class='rowtest2'>
+                <?php foreach ($statistics->data->now->balances as $balance){?>
+                    <div data-lcolor="<?=rand_color()?>"><?= $balance->value+$balance->value_in_orders ?><span><?= $balance->name ?></span></div>
+                <?php } ?>
+
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="seven columns" style="padding-top:20px;">
+                <div class='result_list'>
+                </div>
+            </div>
+        </div>
+    </div>
 
 <form method="POST">
 	<p>Name: <input name="Promotion[name]" value="<?=$promotion->name?$promotion->name:"No name";?>"></p>
@@ -235,4 +283,25 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
         });
 
     }
+</script>
+<script>
+    $('.rowtest2').listtopie({
+        size:'auto',
+        strokeWidth:2,
+        hoverEvent:true,
+        hoverBorderColor:'#585858',
+        hoverWidth:2,
+        textSize:'16',
+        marginCenter:30,
+        listVal:true,
+        strokeColor:'#fff',
+        listValMouseOver: true,
+        infoText:false,
+        setValues:false,
+        listValInsertClass:'result_list',
+        backColorOpacity: '0.8',
+        hoverSectorColor:true,
+        usePercent:true
+    });
+
 </script>

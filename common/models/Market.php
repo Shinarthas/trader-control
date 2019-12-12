@@ -11,10 +11,12 @@ use Yii;
  * @property string $name
  * @property string $url
  * @property string $image
+ * @property object $statistics
  * @property int $created_at
  */
 class Market extends \yii\db\ActiveRecord
 {
+    public $statistics;
     /**
      * {@inheritdoc}
      */
@@ -46,10 +48,12 @@ class Market extends \yii\db\ActiveRecord
             'url' => 'Url',
             'image' => 'Image',
             'created_at' => 'Created At',
+            'statistics' => 'statistic',
         ];
     }
 	
 	public function getPromotions() {
 		return $this->hasMany(Promotion::className(), ['market_id'=>'id']);
 	}
+
 }

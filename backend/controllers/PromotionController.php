@@ -47,8 +47,10 @@ class PromotionController extends Controller
 		
 		if(isset($_POST['start'])) 
 			$promotion->start();
+
+		$statistics=ApiRequest::statistics('v1/promotion/get-statistics',['id'=>$promotion->id]);
 		
-		return $this->render("view", ['promotion' => $promotion]);
+		return $this->render("view", ['promotion' => $promotion,'statistics'=>$statistics]);
 	}
     public function actionGraph2($id){
         \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
