@@ -48,7 +48,7 @@ class BinanceExchange {
         //TODO: �������� �� ������ �� �� � �������� �� ������
         //$currency_pair=$currency_two->symbol.$currency_one->symbol;
         $currency_pair=$currency_two->symbol.$currency_one->symbol;//  we have to keep same structure all over
-
+        error_reporting(0);//disable notice for binance api
         $depth = $api->depth($currency_pair);
         return [
             'buy_price' => array_key_first($depth['asks']),

@@ -148,7 +148,6 @@ class Promotion extends \yii\db\ActiveRecord
 	}
 
 	public function createHourTasks($start_time, $day_tasks = false) {
-        echo $this->id;
 		$multiply = 60;
 		if($day_tasks)
 			$multiply = 60*24;
@@ -159,7 +158,6 @@ class Promotion extends \yii\db\ActiveRecord
 			$count_tasks = $count_tasks_limits[0];
 		else
 			$count_tasks = rand($count_tasks_limits[0], $count_tasks_limits[1]);
-
 
 		if($this->mode != self::MODE_SAFE_EXIT) {
 			for($i=0;$i<$count_tasks;$i++) {
@@ -341,10 +339,28 @@ class Promotion extends \yii\db\ActiveRecord
 	}
 	
 	public function getTasks() {
-		return $this->hasMany(Task::className(), ['promotion_id'=>'id'])->orderBy("task.time DESC")->limit(30);
+            return $this->hasMany(Task::className(), ['promotion_id'=>'id'])->orderBy("task.time DESC")->limit(1000);
 	}
 	
 	public function getMarket() {
 		return $this->hasOne(Market::className(), ['id'=>'market_id']);
 	}
+	//return account fith funds
+	public function calculateAccount($sell,$tokens_count){
+        Log::log(['promotion_id'=> $this->id,'sell'=>$sell,'tokens'=>$tokens_count]);
+        $res=ApiRequest::statistics('v1/promotion/get-account-with-funds',[
+            'sell'=>$sell,
+            'market_id'=>$this->market_id,
+            'currency_one'=>$this->currency_one,
+            'currency_two' => $this->currency_two,
+            'tokens_count' => $tokens_count,
+            'promotion_id' => $this->id,
+        ]);
+        Log::log($res);
+        if(!$res->status)
+            return 0;
+
+        $account=Account::findOne($res->data->id);
+        return $account;
+    }
 }

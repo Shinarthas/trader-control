@@ -94,8 +94,8 @@ function rand_color() {
         })
     </script>
 
-	
-<h3 style="text-align:center;padding:15px 0 0 0 ;font-size:28px;color: #ffffffdf;"><?=$promotion->name;?> <?=$promotion->main_currency->symbol;?> / <?=$promotion->second_currency->symbol;?></h3>
+
+<h3 style="text-align:center;padding:15px 0 0 0 ;font-size:28px;color: #ffffffdf;"><?=$promotion->name;?> <b><?= $promotion->market->name?> </b><?=$promotion->main_currency->symbol;?> / <?=$promotion->second_currency->symbol;?></h3>
 <div class="row" style="margin: 21px;">
 
 <div class="iChart" style="position: relative; height: 550px; width: 100%"></div>
@@ -141,13 +141,12 @@ if($promotion->mode == $promotion::MODE_FAST_EARN)
 <?=$promotion->enabled==1?'enabled':'disabled';?>
 
 <h3></h3>
-    <?php print_r($statistics->data->now->balances);?>
     <div class="row">
         <div class="col-md-6">
             <p>Chart</p>
             <div class='rowtest2'>
                 <?php foreach ($statistics->data->now->balances as $balance){?>
-                    <div data-lcolor="<?=rand_color()?>"><?= $balance->value+$balance->value_in_orders ?><span><?= $balance->name ?></span></div>
+                    <div data-lcolor="<?=rand_color()?>"><?= $balance->value+$balance->value_in_orders ?> <span> <?= $balance->name ?></span></div>
                 <?php } ?>
 
             </div>

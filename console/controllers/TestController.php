@@ -7,6 +7,7 @@ use common\components\ApiRequest;
 use common\models\Account;
 use common\models\CurrencyPrice;
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
 use yii\console\Controller;
 use common\models\Task;
@@ -58,5 +59,11 @@ class TestController extends Controller
     public function actionPromotion($task_id){
 	    $task=Task::findOne($task_id);
 	    print_r($task->promotion);
+    }
+
+    public function actionCalculateAccount(){
+	    $promotoin=Promotion::findOne(8);
+	    $account=$promotoin->calculateAccount(1,0.1);
+	    print_r(ArrayHelper::toArray($account));
     }
 }

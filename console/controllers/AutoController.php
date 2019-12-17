@@ -5,6 +5,7 @@ use api\v1\renders\ResponseRender;
 use common\components\ApiRequest;
 use common\models\Log;
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
 use yii\console\Controller;
 use common\models\Task;
@@ -47,8 +48,9 @@ class AutoController extends Controller
 	public function actionPossibilityTask(){
 	    //getting chances for promotions
         $possibilityTable=ApiRequest::statistics('v1/possibility/current',[]);
+        //print_r($possibilityTable->data[0]);
         foreach ($possibilityTable->data as $possibility){
-
+            echo $possibility->promotion_id." ";
             $promotion=Promotion::findOne($possibility->promotion_id);
             if($promotion->enabled && $promotion->mode==Promotion::MODE_POSSIBILITY &&
                 $possibility->chance>=$promotion->settings['minimal_percent'])

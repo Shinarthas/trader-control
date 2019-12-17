@@ -57,7 +57,6 @@ class PromotionController extends Controller
         $data=Yii::$app->request->get();
         $data['promotion_id']=$id;
         $res=ApiRequest::statistics('v1/promotion/graph',$data);
-        print_r($res);
     }
 	public function actionGraph($id) {
 		\Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;

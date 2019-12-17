@@ -5,11 +5,13 @@ namespace api\v1\controllers;
 use api\v1\renders\ResponseRender;
 use api\v1\renders\OrderRender;
 
+use common\models\Log;
 use common\models\PromotionAccount;
 use Yii;
 use api\v1\extensions\controllers\AuthApiController;
 use common\models\Task;
 use common\components\ApiRequest;
+use yii\helpers\ArrayHelper;
 
 class PromotionController extends AuthApiController
 {
@@ -18,6 +20,7 @@ class PromotionController extends AuthApiController
 
 	    $accounts=PromotionAccount::find()->select('account_id')
             ->where(['promotion_id'=>$promotion_id])->all();
+	    Log::log(ArrayHelper::toArray($promotion_id),false,'accounts');
 	    return ResponseRender::success($accounts);
 
     }

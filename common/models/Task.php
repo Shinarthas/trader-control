@@ -73,8 +73,8 @@ class Task extends \yii\db\ActiveRecord
     {
         return [
             [['promotion_id',  'value', 'random_curve', 'time'], 'required'],
-            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'value', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
-            [['random_curve', 'tokens_count', 'rate'], 'number'],
+            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
+            [['random_curve', 'tokens_count','value',  'rate'], 'number'],
             [['data_json'], 'string'],
         ];
     }
@@ -110,7 +110,6 @@ class Task extends \yii\db\ActiveRecord
 		$promotion = $this->promotion;
 		if($promotion->enabled == 0)
 			return false;
-
 		$this->save();
 		if(!$res=$this->calculateRate())
 		{
@@ -135,22 +134,27 @@ class Task extends \yii\db\ActiveRecord
 		if($this->sell == 1 AND (int)$promotion->settings['fixed_tasks_currency_two']!=0) {
 			$tokens_count = $promotion->settings['fixed_tasks_currency_two'];
 		}
-
+        $this->tokens_count = $tokens_count;
 		if($promotion->settings['calculate_account']!=1)
 			$account = $this->promotion->accounts[array_rand($this->promotion->accounts,1)];
 		else
 		{
-			if(!$account = $promotion->calculateAccount())
+            Log::log(['calculate']);
+            $account = $promotion->calculateAccount($this->sell,$this->tokens_count);
+
+			if(!$account || empty($account) || $account===0)
 			{
+                Log::log(['account'=>$account,'normas'=>'normas']);
 				$this->status = self::STATUS_ACCOUNT_NOT_FOUND;
 				$this->save();
 				return false;
 			}
+            Log::log(['account'=>ArrayHelper::toArray($account),'gavno'=>'gavno']);
 		}
 			
 		$this->account_id = $account->id;
 		
-		$this->tokens_count = $tokens_count;
+
   	$result = ApiRequest::accounts('v1/orders/create', 
 			[
 			'id'=>$this->id,
@@ -172,6 +176,7 @@ class Task extends \yii\db\ActiveRecord
             if(isset($result->data->external_id)){
                 $this->external_id=$result->data->external_id;
             }
+            Log::log(['good order']);
             //update same info on statistics serve
             $resultStatistics = ApiRequest::statistics('v1/orders/create',
                 ArrayHelper::toArray($this));
@@ -183,7 +188,8 @@ class Task extends \yii\db\ActiveRecord
 	}
 
 	public static function possibility(Promotion $promotion){
-
+        //die('die');
+        echo $promotion->id;
         $account = $promotion->accounts[array_rand($promotion->accounts,1)];
 
 
@@ -225,36 +231,39 @@ class Task extends \yii\db\ActiveRecord
             //sleep(3);//чтоб ордер точно прошел
         }
         if($how_many_usdt_we_need>$how_many_usdt_we_have){
+
             //у нас нет столько нужно купить
             $how_many_we_need_to_buy=($how_many_usdt_we_need-$how_many_usdt_we_have)*1.01;
+
             $task=new Task();
             $task->account_id = $account->id;
             $task->promotion_id=$promotion->id;
             $task->status=0;
             $task->sell=0;
-            $task->rate=$exchange_rates->data->sell_price*1.002;// 10%
-            $task->tokens_count=$how_many_we_need_to_buy;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+            $task->rate=$exchange_rates->data->buy_price*1.001;
+            $task->tokens_count=$how_many_we_need_to_buy/$exchange_rates->data->sell_price;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
             $task->random_curve=0;
-            $task->value=intval($task->tokens_count*$task->rate);
+            $task->value=($task->tokens_count*$task->rate);
             $task->progress=0;
             $task->time=time();
 
             $task->save();
-            echo $task->id;
 
             $task->make();
-
+            Log::log(['we place a buy order',$task->id,$task->promotion_id]);
             sleep(3);//чтоб ордер точно прошел
+        }else{
+            Log::log(['no order '.$how_many_usdt_we_need.' '.$how_many_usdt_we_have,'promotion='.$promotion->id]);
         }
         $task=new Task();
         $task->account_id = $account->id;
         $task->promotion_id=$promotion->id;
         $task->status=0;
         $task->sell=1;
-        $task->rate=$exchange_rates->data->sell_price*1.10;// 10%
+        $task->rate=$exchange_rates->data->sell_price*1.005;// 10%
         $task->tokens_count=$how_many_usdt_we_need/$exchange_rates->data->sell_price;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
         $task->random_curve=0;
-        $task->value=intval($task->tokens_count*$task->rate);
+        $task->value=($task->tokens_count*$task->rate);
         $task->progress=0;
         $task->time=time();
 
@@ -262,7 +271,7 @@ class Task extends \yii\db\ActiveRecord
         echo $task->id;
 
         $task->make();
-
+        echo "Aaaa";
         // поставить ордер
 
 
