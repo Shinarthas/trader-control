@@ -8,5 +8,6 @@ return [
 	
 	'account-api-url' => 'http://t-a',
 	'control-api-url' => 'http://t-c-a',
-	'statistics-api-url' => 'http://t-s-a'
+	'statistics-api-url' => 'http://t-s-a',
+
 ];

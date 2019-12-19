@@ -2,7 +2,11 @@
 namespace console\controllers;
 
 use api\v1\renders\ResponseRender;
+use common\models\DemoBalance;
 use common\components\ApiRequest;
+use common\components\Executor;
+use common\models\Company;
+use common\models\DemoTask;
 use common\models\Log;
 use Yii;
 use yii\helpers\ArrayHelper;
@@ -59,7 +63,205 @@ class AutoController extends Controller
 
         }
     }
-	
+    public function actionTrader2(){
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',[]);
+        $trading_pairs=$trading_pairs->data;
+
+
+
+
+
+        foreach ($trading_pairs as $trading_pair){
+            $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
+            $trading_pair->statistics=$tmp->data;
+
+        }
+
+        //close balances if they triggered
+        $tasks=DemoTask::find()->where(['sell'=>1,'status'=>DemoTask::STATUS_CREATED])->all();
+        $balance=DemoBalance::find()->orderBy('id desc')->limit(1)->one();
+        $new_balance_json=[];
+        $new_balance_json['USDT']=$balance->balances['USDT'];
+        foreach ($tasks as $task){
+            foreach ($trading_pairs as $trading_pair){
+                if($task->currency_one.$task->currency_two==$trading_pair->trading_paid){
+                    if($task->rate<=$trading_pair->statistics->now->bid){
+                        $new_balance_json['USDT']['tokens']+=$task->rate*$task->tokens_count;
+                        $new_balance_json['USDT']['value']+=$task->rate*$task->tokens_count;
+
+                        $task->satus=DemoTask::STATUS_COMPLETED;
+                        $task->save();
+                    }
+                }
+            }
+        }
+        $new_balance=new DemoBalance();
+        $new_balance->balances=$new_balance_json;
+        $new_balance->timestamp=date("Y-m-d H:i:s");
+        $new_balance->save();
+
+        //cancel outdated
+        $tasks=DemoTask::find()->where(['sell'=>1,'status'=>DemoTask::STATUS_CREATED])->all();
+        $balance=DemoBalance::find()->orderBy('id desc')->limit(1)->one();
+        $new_balance_json=$balance->balances;
+        $new_balance_json['USDT']=$balance->balances['USDT'];
+        foreach ($tasks as $task){
+            if(time()-$task->created_at>4*3600){
+                foreach ($trading_pairs as $trading_pair){
+                    if($task->currency_one.$task->currency_two==$trading_pair['trading_paid']){
+                        echo " CANCELED ORDER ";
+                        $new_balance_json['USDT']['tokens']+=$trading_pair->statisitcs->now->bid*$task->tokens_count;
+                        $new_balance_json['USDT']['value']+=$trading_pair->statisitcs->now->bid*$task->tokens_count;
+
+                        $new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)]['tokens']-=$task->tokens_count;
+                        $new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)]['value']-=$task->tokens_count*$trading_pair->statistics->{'now'}->bid;
+
+                        $task->satus=DemoTask::STATUS_CANCELED;
+                        $task->save();
+                    }
+                }
+            }
+        }
+        $new_balance=new DemoBalance();
+        $new_balance->balances=$new_balance_json;
+        $new_balance->timestamp=date("Y-m-d H:i:s");
+        $new_balance->save();
+        // end cancel outdated
+
+
+
+        //place new
+        $balance=DemoBalance::find()->orderBy('id desc')->limit(1)->one();
+
+        $new_balance_json=[];
+        $new_balance_json=$balance->balances;
+        $usdt_value=$balance->balances['USDT']['value'];
+        $summary_usdt=0;
+        foreach ($balance->balances as $currency=>$value){
+            $summary_usdt+=$value['value'];
+        }
+
+        foreach ($trading_pairs as $trading_pair){
+
+            $bid10=$trading_pair->statistics->{'10min'}->bid;
+            $bid5=$trading_pair->statistics->{'5min'}->bid;
+            $bid_now=$trading_pair->statistics->{'now'}->bid;
+
+            if($trading_pair->statistics->{'now'}->bid!=0)
+                //if(($bid10-$bid5)/$bid5>6 && ($bid_now-$bid5)/$bid5>1.5 && $usdt_value>=$summary_usdt*0.1){
+                if(true && $usdt_value>=abs($summary_usdt*0.1)){
+                    $task_buy=new DemoTask();
+
+                    $task_buy->company_id=1;
+                    $task_buy->status=5;//  потому что мы как бы продали
+                    $task_buy->sell=0;
+
+                    //закупаемся на 10%
+                    $task_buy->tokens_count=$summary_usdt*0.1/$trading_pair->statistics->{'now'}->bid;
+                    if($task_buy->tokens_count<0.1)
+                        continue;
+                    //отнимаем от нашего баланса
+                    $new_balance_json['USDT']['tokens']=$new_balance_json['USDT']['tokens']-$summary_usdt*0.1;
+                    $new_balance_json['USDT']['value']=$new_balance_json['USDT']['value']-$summary_usdt*0.1;
+                    if(isset($new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)])){
+                        $new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)]['tokens']=
+                            $new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)]['tokens']+$summary_usdt*0.1/$trading_pair->statistics->{'now'}->bid;
+                        $new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)]['value']=
+                            $new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)]['value']+$summary_usdt*0.1;
+                    }else{
+                        $new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)]['tokens']=$summary_usdt*0.1/$trading_pair->statistics->{'now'}->bid;
+                        $new_balance_json[str_replace('USDT','',$trading_pair->trading_paid)]['value']=$summary_usdt*0.1;
+                    }
+                    $usdt_value-=$summary_usdt*0.1;
+
+                    $task_buy->rate=$trading_pair->statistics->{'now'}->bid;
+                    $task_buy->progress=100;
+                    $task_buy->data_json=[];
+                    $task_buy->time=time();
+                    $task_buy->created_at=time();
+                    $task_buy->loaded_at=time();
+                    $task_buy->currency_one=str_replace('USDT','',$trading_pair->trading_paid);
+                    $task_buy->currency_two='USDT';
+                    $task_buy->external_id='1';
+                    $task_buy->data_json="{'asd':'asd'}";
+                    $task_buy->save();
+
+
+
+
+                    //и сразу выставляем на продажу
+                    $task_sell=new DemoTask();
+
+                    $task_sell->company_id=1;
+                    $task_sell->status=2;//  потому что мы как бы продали
+                    $task_sell->sell=1;
+
+                    //закупаемся на 10%
+                    $task_sell->tokens_count=$summary_usdt*0.1/$trading_pair->statistics->{'now'}->bid;
+                    if($task_sell->tokens_count<0.1)
+                        continue;
+
+                    $task_sell->rate=$trading_pair->statistics->{'now'}->ask*1.04;
+                    $task_sell->progress=0;
+                    $task_sell->data_json=[];
+                    $task_sell->time=time();
+                    $task_sell->created_at=time();
+                    $task_sell->loaded_at=time();
+                    $task_sell->currency_one=str_replace('USDT','',$trading_pair->trading_paid);
+                    $task_sell->currency_two='USDT';
+                    $task_sell->external_id='1';
+                    $task_sell->data_json="{'asd':'asd'}";
+                    $task_sell->save();
+
+
+
+                }
+        }
+        $new_balance=new DemoBalance();
+        $new_balance->balances=$new_balance_json;
+        $new_balance->timestamp=date("Y-m-d H:i:s");
+        $new_balance->save();
+        // end place new
+
+
+
+        //calculate balance
+        //get open orders
+        $balance=DemoBalance::find()->orderBy('id desc')->limit(1)->one();
+
+        $new_balance_json=$balance->balances;
+        $new_balance_json['USDT']=$balance->balances['USDT'];
+        $tasks=DemoTask::find()->where(['sell'=>1,'status'=>DemoTask::STATUS_CREATED])->all();
+        foreach ($tasks as $task){
+            foreach ($trading_pairs as $trading_pair){
+                if($task->currency_one.$task->currency_two==$trading_pair->trading_paid){
+                    if(isset($new_balance_json[$task->currency_one])){
+                        $new_balance_json[$task->currency_one]['tokens']+=$task->tokens_count;
+                        $new_balance_json[$task->currency_one]['value']+=$task->tokens_count*$trading_pair->statistics->now->bid;
+                    }
+                }
+            }
+        }
+        $new_balance=new DemoBalance();
+        $new_balance->balances=$new_balance_json;
+        $new_balance->timestamp=date("Y-m-d H:i:s",time());
+        $new_balance->save();
+
+    }
+	public function actionCompany(){
+	    $companies=Company::find()->all();
+	    $tmp=ApiRequest::statistics('v1/trader2/statistics',[]);
+        print_r($tmp->status);
+	    if(!$tmp->status)
+            return;
+
+        $statistics=$tmp->data;
+        foreach ($companies as $company){
+            foreach ($statistics->items as $stat){
+                $company->check($stat);
+            }
+        }
+    }
 	public function actionMakeTask($id) {
 		$task = Task::findOne($id);  
 
@@ -70,7 +272,8 @@ class AutoController extends Controller
 	public function actionCheckPrice($id) {
 		$p = Promotion::findOne($id);
 		$res=$p->checkPrice();
-		print_r($res);
+		//возможно запрашивать по каждой валюте
+
 	}
 	
 	public function actionCreateHourTasks() {

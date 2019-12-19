@@ -213,6 +213,7 @@ AppAsset::register($this);
 		<div class="menu">
 			<a href="/">Home</a>
 			<a href="/">Markets</a>
+			<a href="/trader2">Trader 2.0</a>
 			<a href="/possibility">possibility</a>
 			<a href="/account">Accounts</a>
 			<a href="/currency">Currencies</a>
