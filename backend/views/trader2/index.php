@@ -20,13 +20,24 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin="anonymous"></script>
 <script src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
 <div class="row" >
-    <div style="max-height: 400px; overflow: auto" class="col-md-6">
-        <div class="row">
+    <div style="max-height: 800px; overflow: hidden" class="col-md-6">
+        <div class="row currency_wrapper">
             <?php foreach ($trading_pairs as $pair){ ?>
-                <div class="col-md-6">
+                <?php if($pair->statistics->data->{'5min'}->bid==0){continue;}?>
+                <div class="col-md-6 currency currency-<?= $pair->trading_paid; ?>">
                     <div class="panel panel-default">
                         <div class="panel-body <?= $pair->trading_paid; ?>-panel">
-                            <p class="symbol"><?= $pair->trading_paid; ?></p>
+                            <?php
+
+                            $bid10=$pair->statistics->data->{'10min'}->bid;
+                            $bid5=$pair->statistics->data->{'5min'}->bid;
+                            $bid_now=$pair->statistics->data->{'now'}->bid;
+                            $rating=(($bid_now-$bid5)/$bid5)+($bid10-$bid5)/$bid5*100;
+                            ?>
+                            <p class="symbol">
+                                <?= $pair->trading_paid; ?> :
+                                <span class="rating"><?php echo number_format($rating,3)?></span>
+                            </p>
                             <div class="chart" style="min-height: 100px">
 
                             </div>
@@ -36,7 +47,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
             <?php } ?>
         </div>
     </div>
-    <div style="max-height: 400px; overflow: auto" class="col-md-6">
+    <div style="max-height: 800px; overflow: hidden" class="col-md-6">
         <div  class="row">
             <p>Totals</p>
 
@@ -44,15 +55,26 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 <?php foreach ($balances[0]->balances as $symbol=>$balance){ ?>
                     <?php if($balance['value']>0) {?>
 
-                    <p><?= $symbol ?>: <?= $balance['tokens'] ?>(<?= $balance['value'] ?>)</p>
+                        <p><b style="font-size: 24px"><?= $symbol ?></b>: <span style="font-size: 24px; color:lime">$(<?= number_format($balance['value'],2) ?>)</span> <?= number_format($balance['tokens'],2) ?></p>
                     <?php } ?>
                 <?php } ?>
+
+                <div id="chartContainer" style="height: 370px; width: 100%;"></div>
             </div>
             <div class="col-md-6">
+                <?php $prev='1970-01-01 00:00:00'; ?>
                 <?php foreach ($balances as $b){ ?>
-
+                    <?php
+                    if(abs(strtotime($prev)-strtotime($b->timestamp))<10){
+                        continue;
+                    }else{
+                        $prev=$b->timestamp;
+                    }
+                    ?>
                     <p><?php echo  $b->timestamp ?> :
                     <?php
+
+
                     $total_usdt=0;
                     foreach ($b->balances as $bb){
                         $total_usdt+=$bb['value'];
@@ -66,52 +88,8 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         </div>
     </div>
 </div>
-<div class="row">
-    <h3>History:</h3>
-    <table class="table">
-        <thead>
-        <tr>
-            <th>id</th>
-            <th>date</th>
-            <th>Currency</th>
-            <th>rate</th>
-            <th>tokens</th>
-            <th>status</th>
-            <th>profit</th>
-        </tr>
-        </thead>
-        <tbody>
 
-        <? for($i=0;$i<count($orders);$i++): ?>
-        <? $t=$orders[$i]; ?>
-        <?php if($t->sell==0) continue; ?>
-            <tr>
-                <td><?=$t->id;?></td>
-                <td><?=date("d/m/y H:i", $t->time);?></td>
-                <td><?=$t->currency_one;?></td>
-                <td><?=$t->rate;?></td>
-                <td><?=$t->tokens_count;?></td>
-
-                <td><?=$t->rate*$t->tokens_count;?></td>
-                <td><? if($t->status==1){echo "<b style='color:red'>error</b>";} else if($t->status==2){echo "OK";
-                        if($t->progress != 100) {
-                            echo '<b style="color:red"> ('.$t->progress.'%)</b>';
-                        }
-                    }else if($t->status==3){
-                        echo "price error";
-                    } else {
-                        echo $t::$statuses[$t->status];
-                    }
-
-                    ?></td>
-
-            </tr>
-
-        <? endfor; ?>
-        <tbody>
-    </table>
-</div>
-<div class="row">
+<div class="row" style="display: none">
     <?php foreach ($companies as $company){?>
         <a class="btn btn btn-default" href="/trader2/<?= $company->id ?>/edit"><?= $company->name ?> </a>
     <?php } ?>
@@ -124,9 +102,20 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         font-size: 24px;
         font-weight: bold;
     }
+    .rating{
+        color: black;
+        font-size: 12px;
+    }
+    .menu{
+        opacity: 0;
+    }
+    body,html{
+        overflow: hidden;
+    }
 </style>
 <script>
-    var trading_pairs=<?= json_encode($trading_pairs)?>
+    var trading_pairs=<?= json_encode($trading_pairs)?>;
+    var balances=<?= json_encode($balances[0]->balances)?>;
 </script>
 <script>
     window.onload = function () {
@@ -157,9 +146,68 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                     }
                 ]
             };
-            $("."+pair.trading_paid+"-panel").find('.chart').CanvasJSChart(options);
+            if($("."+pair.trading_paid+"-panel").find('.chart').length)
+                $("."+pair.trading_paid+"-panel").find('.chart').CanvasJSChart(options);
         }
+        var dd=[];
+        for (const [key, value] of Object.entries(balances)) {
+            dd.push({y:value.value,label:key})
+        }
+        console.log(dd);
+        var chart = new CanvasJS.Chart("chartContainer", {
+            theme: "dark1", // "light1", "light2", "dark1", "dark2"
+            exportEnabled: true,
+            animationEnabled: true,
+            title: {
+                text: "Bank"
+            },
+
+            data: [{
+                type: "pie",
+                showInLegend: true,
+                //toolTipContent: "<b>{name}</b>: ${y} (#percent%)",
+                indexLabel: "{label}",
+                //legendText: "{name} (#percent%)",
+                indexLabelPlacement: "inside",
+                dataPoints: dd
+            }]
+        });
+        chart.render();
 
 
     }
+
+
+    setInterval(updateAndSort,5000)
+    function updateAndSort() {
+        $('.currency_wrapper .currency').each(function( index ) {
+            var rating=parseFloat($(this).find('.rating').text())
+            var random=generateRandomNumber(-0.1,0.1);
+            $(this).find('.rating').text((rating+random).toFixed(3))
+        });
+        // $('.currency_wrapper .currency').sort(function(a,b) {
+        //     return parseFloat($(a).find('.rating').text()) > parseFloat($(b).find('.rating').text());
+        // }).appendTo('.currency_wrapper');
+
+
+        $('.currency_wrapper .currency').sort(function(a, b) {
+            return +$(a).find('.rating').text() - +$(b).find('.rating').text();
+        })
+            .each(function() {
+                $('.currency_wrapper').append(this);
+            });
+    }
+    function generateRandomNumber(min,max) {
+            highlightedNumber = Math.random() * (max - min) + min;
+
+            return highlightedNumber;
+    };
+    function refresh() {
+
+            window.location.reload(true);
+
+    }
+
+    setTimeout(refresh, 60*1000)
+
 </script>

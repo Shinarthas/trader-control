@@ -35,13 +35,17 @@ class Trader2Controller extends Controller
 	    $trading_pairs=ApiRequest::statistics('v1/trader2/list',[]);
         $trading_pairs=$trading_pairs->data;
 
-        $balances=DemoBalance::find()->limit(30)->orderBy('id desc')->all();
+        $balances=DemoBalance::find()->limit(1000)->orderBy('id desc')->all();
 
-        $orders=DemoTask::find()->orderBy('id desc')->limit(10)->all();
+        $orders=DemoTask::find()->orderBy('id desc')->limit(50)->all();
 
         foreach ($trading_pairs as $trading_pair){
             $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
             $trading_pair->statistics=$tmp;
+        }
+        $trading_pairs_remapped=[];
+        foreach ($trading_pairs as $trading_pair){
+            $trading_pairs_remapped[$trading_pair->trading_paid]=$trading_pair;
         }
 
 
@@ -52,7 +56,38 @@ class Trader2Controller extends Controller
             'companies' => $Companies,
             'trading_pairs'=>$trading_pairs,
             'orders'=>$orders,
-            'balances'=>$balances
+            'balances'=>$balances,
+            'trading_pairs_remapped'=>$trading_pairs_remapped
+        ]);
+    }
+
+    public function actionIndex2(){
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',[]);
+        $trading_pairs=$trading_pairs->data;
+
+        $balances=DemoBalance::find()->limit(30)->orderBy('id desc')->all();
+
+        $orders=DemoTask::find()->orderBy('id desc')->limit(300)->all();
+
+        foreach ($trading_pairs as $trading_pair){
+            $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
+            $trading_pair->statistics=$tmp;
+        }
+        $trading_pairs_remapped=[];
+        foreach ($trading_pairs as $trading_pair){
+            $trading_pairs_remapped[$trading_pair->trading_paid]=$trading_pair;
+        }
+
+
+        $Companies=Company::find()->all();
+
+
+        return $this->render("index2", [
+            'companies' => $Companies,
+            'trading_pairs'=>$trading_pairs,
+            'orders'=>$orders,
+            'balances'=>$balances,
+            'trading_pairs_remapped'=>$trading_pairs_remapped
         ]);
     }
 

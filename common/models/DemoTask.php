@@ -75,6 +75,15 @@ class DemoTask extends \yii\db\ActiveRecord
     const STATUS_CANCELED = 4;
     const STATUS_COMPLETED = 5;
     const STATUS_ACCOUNT_NOT_FOUND = 11;
+    public static $statuses = [
+        self::STATUS_NEW => 'new',
+        self::STATUS_STARTED => 'error',
+        self::STATUS_CREATED => 'created',
+        self::STATUS_PRICE_ERROR => 'price error',
+        self::STATUS_CANCELED => 'canceled by system',
+        self::STATUS_COMPLETED => 'completed',
+        self::STATUS_ACCOUNT_NOT_FOUND => 'account not found',
+    ];
 
     public function create(){
 

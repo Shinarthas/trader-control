@@ -25,6 +25,7 @@ function removeqsvar($url, $varname) {
                 <select class="form-control" name="type">
                     <option  value="" <?=($_GET['type']=="")?'selected':''?> ></option>
                     <option  value="error" <?=($_GET['type']=="error")?'selected':''?> >Error</option>
+                    <option  value="withdraw" <?=($_GET['type']=="withdraw")?'selected':''?> >withdraw</option>
                     <option  value="info" <?=($_GET['type']=="info")?'selected':''?> >Info</option>
                     <option  value="warning" <?=($_GET['type']=="warning")?'selected':''?> >Warning</option>
                     <option  value="log" <?=($_GET['type']=="log")?'selected':''?> >Log</option>
@@ -84,7 +85,13 @@ function removeqsvar($url, $varname) {
         </tbody>
     </table>
 </div>
+<div class="row">
+    <?php foreach ($companies as $company){?>
+        <a class="btn btn btn-default" href="/trader2/<?= $company->id ?>/edit"><?= $company->name ?> </a>
+    <?php } ?>
+    <a class="btn btn btn-primary" href="/trader2/new">New Company</a>
 
+</div>
 <style>
     .table{
         background: #212529 !important;

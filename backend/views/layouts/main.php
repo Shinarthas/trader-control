@@ -202,6 +202,27 @@ AppAsset::register($this);
 			line-height:15px;
 			vertical-align:middle;
 		}
+
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #292929;
+            border: none;
+            border-bottom: none;
+            border-top: none;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
 	</style>
 </head>
 <body>
