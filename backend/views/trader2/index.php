@@ -106,9 +106,6 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         color: black;
         font-size: 12px;
     }
-    .menu{
-        opacity: 0;
-    }
     body,html{
         overflow: hidden;
     }

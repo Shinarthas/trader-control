@@ -32,7 +32,7 @@ class Trader2Controller extends Controller
 	}
 
 	public function actionIndex(){
-	    $trading_pairs=ApiRequest::statistics('v1/trader2/list',[]);
+	    $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'limit'=>10]);
         $trading_pairs=$trading_pairs->data;
 
         $balances=DemoBalance::find()->limit(1000)->orderBy('id desc')->all();
@@ -126,5 +126,21 @@ class Trader2Controller extends Controller
             print_r($company->errors);
             return 0;
         }
+    }
+    public function actionPairs(){
+        if(Yii::$app->request->isPost){
+            $res=ApiRequest::statistics('v1/trader2/update',Yii::$app->request->post());
+            print_r($res);
+        }
+
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['limit'=>1000]);
+        $trading_pairs=$trading_pairs->data;
+
+
+
+        return $this->render("pairs", [
+            'trading_pairs'=>$trading_pairs,
+
+        ]);
     }
 }
