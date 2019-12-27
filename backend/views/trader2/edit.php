@@ -45,6 +45,9 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
             <div class="row"><div class="col-md-2">name:</div>
                 <div class="col-xs-4"><input class="form-control" name='name'
                                              value="<?php echo isset($company) ? $company->name : 'no name' ?>"></div></div>
+            <div class="row"><div class="col-md-2">Entrance currency:</div>
+                <div class="col-xs-4"><input class="form-control" name='entrance_currency'
+                                             value="<?php echo isset($company) ? $company->entrance_currency : 'USDT' ?>"></div></div>
             <div class="row"><div id="settings" style="width: 400px; height: 400px;"></div>
             </div>
             <div class="row"><div class="col-md-2">Trigger Score:</div>
@@ -107,6 +110,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
             var data={
                 'id' : form.find('input[name=\'id\']').val(),
                 'name' : form.find('input[name=\'name\']').val(),
+                'entrance_currency' : form.find('input[name=\'entrance_currency\']').val(),
                 'trigger_score' : form.find('input[name=\'trigger_score\']').val(),
                 'maximal_stake' : form.find('input[name=\'maximal_stake\']').val(),
                 'timeout' : form.find('input[name=\'timeout\']').val(),

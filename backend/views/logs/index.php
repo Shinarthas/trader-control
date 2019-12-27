@@ -89,7 +89,7 @@ function removeqsvar($url, $varname) {
     <?php foreach ($companies as $company){?>
         <a class="btn btn btn-default" href="/trader2/<?= $company->id ?>/edit"><?= $company->name ?> </a>
     <?php } ?>
-    <a class="btn btn btn-primary" href="/trader2/new">New Company</a>
+    <a class="btn btn btn-primary" href="/trader2/new">New Campaign</a>
 
 </div>
 <style>

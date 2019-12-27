@@ -2,6 +2,7 @@
 namespace console\controllers;
 
 use api\v1\renders\ResponseRender;
+use common\models\Campaign;
 use common\models\DemoBalance;
 use common\components\ApiRequest;
 use common\components\Executor;
@@ -66,22 +67,38 @@ class AutoController extends Controller
         }
     }
     public function actionTrader2(){
-        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1]);
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'includes'=>'BTC']);
         $trading_pairs=$trading_pairs->data;
 
         foreach ($trading_pairs as $trading_pair){
             $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
             $trading_pair->statistics=$tmp->data;
-
         }
         $btc_usdt=ApiRequest::statistics('v1/trader2/info',['pair'=>'BTCUSDT']);
         $btc_usdt=$btc_usdt->data;
 
         Trading::index($trading_pairs,$btc_usdt);
-
     }
+     public function actionTrader2new(){
+         $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'includes'=>'BTC']);
+         $trading_pairs=$trading_pairs->data;
+
+         foreach ($trading_pairs as $trading_pair){
+             $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
+             $trading_pair->statistics=$tmp->data;
+         }
+         $btc_usdt=ApiRequest::statistics('v1/trader2/info',['pair'=>'BTCUSDT']);
+         $btc_usdt=$btc_usdt->data;
+
+
+         $campaings=Campaign::find()->all();
+         foreach ($campaings as $campaing){
+             $campaing->index();
+         }
+
+     }
     public function actionCancel(){
-        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1]);
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'includes'=>'BTC']);
         $trading_pairs=$trading_pairs->data;
 
         foreach ($trading_pairs as $trading_pair){
@@ -97,7 +114,7 @@ class AutoController extends Controller
 	    Trading::reset();
     }
 	public function actionCompany(){
-	    $companies=Company::find()->all();
+	    $companies=Campaign::find()->all();
 	    $tmp=ApiRequest::statistics('v1/trader2/statistics',[]);
         print_r($tmp->status);
 	    if(!$tmp->status)

@@ -51,8 +51,17 @@ AppAsset::register($this);
 				 margin:0;
 				 padding:0;
 		}
+
+        @media (min-width: 1281px) {
+            .content{
+                float:left;width: calc(100% - 180px);
+            }
+            .container {
+                width: 1400px;
+            }
+        }
 		.container {
-			    width: 1400px;
+
 				position:relative;
 				top:60px;
     margin: 0 auto;
@@ -231,10 +240,11 @@ AppAsset::register($this);
 <div id="background2"></div>
 
 	<div class="container">
-		<div class="menu">
+		<div class="menu hidden-xs">
 			<a href="/">Home</a>
 			<a href="/">Markets</a>
 			<a href="/trader2">Trader 2.0</a>
+			<a href="/trader2/possibility?symbol=XRPBTC&percent_drop=0.006&percent_bounce=0.001&percent_profit=0.004&timeout=14400">Trader 2.0 possibility</a>
 			<a href="/trader2/pairs">Pair rating</a>
 			<a href="/possibility">possibility</a>
 			<a href="/account">Accounts</a>
@@ -259,7 +269,7 @@ AppAsset::register($this);
                 <?php } ?>
             </div>
         <?php endif; ?>
-		<div class="content" style="float:left;width: calc(100% - 180px);	">
+		<div class="content" style="">
         <?= $content ?>
 
 		</div>

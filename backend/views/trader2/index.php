@@ -2,8 +2,11 @@
 /* @var $this yii\web\View */
 /* @var $possibility array */
 /* @var $companies array */
+/* @var $period int */
 /* @var $trading_pairs array */
 /* @var $balances array */
+/* @var $top_currencies array */
+/* @var $markets array */
 
 use common\components\ApiRequest;
 use yii\bootstrap\ActiveForm;
@@ -19,8 +22,41 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 
 <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin="anonymous"></script>
 <script src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
+<div class="row">
+    <div class="col-xs-12">
+        <h1>Period. Started at <?= date('m-d H:i',$period)?> Ends at <?= date('m-d H:i',$period+6*3600)?> </h1>
+    </div>
+</div>
+<div class="row">
+    <?php foreach ($top_currencies as $cmc_currency){ ?>
+        <div class="col-xs-12">
+            <div class="col-xs-2"><img src="https://s2.coinmarketcap.com/static/img/coins/32x32/<?= $cmc_currency->id ?>.png"></div>
+            <div class="col-xs-2"><?= $cmc_currency->symbol;?></div>
+            <div class="col-xs-3 <?= $cmc_currency->quote->USD->percent_change_1h>0?'text-success':'text-danger' ?>">
+                <?php if($cmc_currency->quote->USD->percent_change_1h>0){ echo '<i class="fa fa-angle-up"></i>';}else{ echo '<i class="fa fa-angle-down"></i>';} ?>
+                <?= $cmc_currency->quote->USD->percent_change_1h;?>
+            </div>
+            <div class="col-xs-2"><?= number_format($cmc_currency->quote->USD->volume_24h,2);?></div>
+            <div class="col-xs-2">
+                <?php $markets_info=\common\assets\CoinMarketCapApi::info($cmc_currency->id) ?>
+                <?php foreach ($markets_info->data->market_pairs as $market){ ?>
+                    <?php foreach ($markets as $m){ ?>
+                        <?php
+                            if($market->exchange->name==$m->name)
+                                echo "<img src='https://s2.coinmarketcap.com/static/img/exchanges/32x32/".$market->exchange->id.".png'>";
+                        ?>
+                    <?php } ?>
+                <?php } ?>
+            </div>
+            <div class="col-xs-1">
+                <?=  number_format($cmc_currency->quote->USD->volume_24h*0.1*($cmc_currency->quote->USD->percent_change_1h),2)  ?>
+            </div>
+
+        </div>
+    <?php } ?>
+</div>
 <div class="row" >
-    <div style="max-height: 800px; overflow: hidden" class="col-md-6">
+    <div style="" class="col-md-6">
         <div class="row currency_wrapper">
             <?php foreach ($trading_pairs as $pair){ ?>
                 <?php if($pair->statistics->data->{'5min'}->bid==0){continue;}?>
@@ -37,6 +73,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                             <p class="symbol">
                                 <?= $pair->trading_paid; ?> :
                                 <span class="rating"><?php echo number_format($rating,3)?></span>
+                                <span class="depth-possibility"><?= \backend\assets\DepthAnalizer::getPossibility(str_replace('BTC','',$pair->trading_paid));?></span>
                             </p>
                             <div class="chart" style="min-height: 100px">
 
@@ -47,53 +84,74 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
             <?php } ?>
         </div>
     </div>
-    <div style="max-height: 800px; overflow: hidden" class="col-md-6">
+    <div style="" class="col-md-6">
         <div  class="row">
-            <p>Totals</p>
+            <div class="col-xs-12">
+                <p>Totals</p>
 
-            <div class="col-md-6">
-                <?php foreach ($balances[0]->balances as $symbol=>$balance){ ?>
-                    <?php if($balance['value']>0) {?>
+                <div class="col-md-6">
+                    <?php foreach ($balances[0]->balances as $symbol=>$balance){ ?>
+                        <?php if($balance['value']>0) {?>
 
-                        <p><b style="font-size: 24px"><?= $symbol ?></b>: <span style="font-size: 24px; color:lime">$(<?= number_format($balance['value'],2) ?>)</span> <?= number_format($balance['tokens'],2) ?></p>
+                            <p><b style="font-size: 24px"><?= $symbol ?></b>: <span style="font-size: 24px; color:lime">$(<?= number_format($balance['value'],2) ?>)</span> <?= number_format($balance['tokens'],2) ?></p>
+                        <?php } ?>
                     <?php } ?>
-                <?php } ?>
 
-                <div id="chartContainer" style="height: 370px; width: 100%;"></div>
+                    <div id="chartContainer" style="height: 370px; width: 100%;"></div>
+                </div>
+                <?php
+                $moneynow=0;
+                foreach ($balances[0]->balances as $bb){
+                    $moneynow+=floatval($bb['value']);
+                }
+                $money_was=0;
+                foreach ($balances[count($balances)-1]->balances as $bb){
+                    $money_was+=floatval($bb['value']);
+                }
+                echo $money_was."<br>";
+                $profit=$moneynow-$money_was;
+                $percent=$profit/$money_was*100;
+                ?>
+                <div class="col-md-6">
+                    <div><b>Profit:</b></div>
+                    <div>
+                        <span class="<?= $profit>0?'text-success':'text-danger' ?>" >$<?= number_format($profit,2)?></span>
+                        <span class="<?= $profit>0?'text-success':'text-danger' ?>" style="font-size: 24px"><i class="fas fa-caret-square-up"></i>(<?= number_format($percent,2)?>%)</span>
+                    </div>
+                    <?php $prev='1970-01-01 00:00:00'; ?>
+                    <?php foreach ($balances as $b){ ?>
+                        <?php
+                        if(abs(strtotime($prev)-strtotime($b->timestamp))<10){
+                            continue;
+                        }else{
+                            $prev=$b->timestamp;
+                        }
+                        ?>
+                        <p><?php echo  date('H:i',strtotime($b->timestamp)) ?> :
+                            <?php
+
+
+                            $total_usdt=0;
+                            foreach ($b->balances as $bb){
+                                $total_usdt+=$bb['value'];
+                            }
+                            echo $total_usdt;
+                            ?>
+
+                        </p>
+                    <?php }  ?>
+                </div>
             </div>
-            <div class="col-md-6">
-                <?php $prev='1970-01-01 00:00:00'; ?>
-                <?php foreach ($balances as $b){ ?>
-                    <?php
-                    if(abs(strtotime($prev)-strtotime($b->timestamp))<10){
-                        continue;
-                    }else{
-                        $prev=$b->timestamp;
-                    }
-                    ?>
-                    <p><?php echo  $b->timestamp ?> :
-                    <?php
 
-
-                    $total_usdt=0;
-                    foreach ($b->balances as $bb){
-                        $total_usdt+=$bb['value'];
-                    }
-                    echo $total_usdt;
-                    ?>
-
-                    </p>
-                <?php }  ?>
-            </div>
         </div>
     </div>
 </div>
 
-<div class="row" style="display: none">
+<div class="row" >
     <?php foreach ($companies as $company){?>
         <a class="btn btn btn-default" href="/trader2/<?= $company->id ?>/edit"><?= $company->name ?> </a>
     <?php } ?>
-    <a class="btn btn btn-primary" href="/trader2/new">New Company</a>
+    <a class="btn btn btn-primary" href="/trader2/new">New Campaign</a>
 
 </div>
 <style>
@@ -102,12 +160,13 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         font-size: 24px;
         font-weight: bold;
     }
-    .rating{
+    .rating,.depth-possibility{
         color: black;
         font-size: 12px;
     }
-    body,html{
-        overflow: hidden;
+
+    .text-success{
+        color: lime;
     }
 </style>
 <script>
@@ -123,7 +182,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                     text: pair.trading_paid
                 },
                 axisX:{
-                    interval: 1,
+                    interval: 10,
                 },
                 axisY: {
                     // title: "If you need",
@@ -136,9 +195,16 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                     {
                         type: "spline", //change it to line, area, column, pie, etc
                         dataPoints: [
-                            { x: 1, y:  pair.statistics.data['10min'].ask},
-                            { x: 2, y:  pair.statistics.data['5min'].ask },
-                            { x: 3, y: pair.statistics.data['now'].ask },
+                            //{ x: 0, y:  pair.statistics.data['240min'].ask},
+                            //{ x: 120, y:  pair.statistics.data['120min'].ask},
+                            //{ x: 180, y:  pair.statistics.data['60min'].ask},
+                            { x: 200, y:  pair.statistics.data['40min'].ask},
+                            { x: 210, y:  pair.statistics.data['30min'].ask},
+                            { x: 220, y:  pair.statistics.data['20min'].ask},
+                            { x: 225, y:  pair.statistics.data['15min'].ask},
+                            { x: 230, y:  pair.statistics.data['10min'].ask},
+                            { x: 235, y:  pair.statistics.data['5min'].ask },
+                            { x: 240, y: pair.statistics.data['now'].ask },
                         ]
                     }
                 ]

@@ -4,14 +4,14 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d5c10334da81ccd11f10c82278b3f18a",
+    "content-hash": "5ce32365ea76e0ec7a0488ed6a0201ce",
     "packages": [
         {
             "name": "bower-asset/bootstrap",
             "version": "v3.4.1",
             "source": {
                 "type": "git",
-                "url": "git@github.com:twbs/bootstrap.git",
+                "url": "https://github.com/twbs/bootstrap.git",
                 "reference": "68b0d231a13201eb14acd3dc84e51543d16e5f7e"
             },
             "dist": {
@@ -26,6 +26,22 @@
             "license": [
                 "MIT"
             ]
+        },
+        {
+            "name": "bower-asset/font-awesome",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:FortAwesome/Font-Awesome.git",
+                "reference": "d8db3d032d22e7a5e21f3b40905b7867be19bb02"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/FortAwesome/Font-Awesome/zipball/d8db3d032d22e7a5e21f3b40905b7867be19bb02",
+                "reference": "d8db3d032d22e7a5e21f3b40905b7867be19bb02"
+            },
+            "type": "bower-asset",
+            "time": "2019-12-10T22:52:13+00:00"
         },
         {
             "name": "bower-asset/inputmask",
@@ -53,7 +69,7 @@
             "version": "3.4.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/jquery/jquery-dist.git",
+                "url": "git@github.com:jquery/jquery-dist.git",
                 "reference": "15bc73803f76bc53b654b9fdbbbc096f56d7c03d"
             },
             "dist": {
@@ -917,6 +933,52 @@
                 "websocket"
             ],
             "time": "2019-11-10T20:35:14+00:00"
+        },
+        {
+            "name": "mashape/unirest-php",
+            "version": "v3.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Mashape/unirest-php.git",
+                "reference": "842c0f242dfaaf85f16b72e217bf7f7c19ab12cb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Mashape/unirest-php/zipball/842c0f242dfaaf85f16b72e217bf7f7c19ab12cb",
+                "reference": "842c0f242dfaaf85f16b72e217bf7f7c19ab12cb",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "codeclimate/php-test-reporter": "0.1.*",
+                "phpunit/phpunit": "~4.4"
+            },
+            "suggest": {
+                "ext-json": "Allows using JSON Bodies for sending and parsing requests"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Unirest\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Unirest PHP",
+            "homepage": "https://github.com/Mashape/unirest-php",
+            "keywords": [
+                "client",
+                "curl",
+                "http",
+                "https",
+                "rest"
+            ],
+            "time": "2016-08-11T17:49:21+00:00"
         },
         {
             "name": "pear/console_table",
@@ -1824,6 +1886,52 @@
                 "shim"
             ],
             "time": "2019-08-06T08:03:45+00:00"
+        },
+        {
+            "name": "vittominacori/coinmarketcap-php",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/vittominacori/coinmarketcap-php.git",
+                "reference": "d15ebaa0decbc076003a0da7d1d687b975df7408"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/vittominacori/coinmarketcap-php/zipball/d15ebaa0decbc076003a0da7d1d687b975df7408",
+                "reference": "d15ebaa0decbc076003a0da7d1d687b975df7408",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "mashape/unirest-php": "^3.0",
+                "php": ">=7.0.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "CoinMarketCap\\": "src/lib/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Vittorio Minacori",
+                    "homepage": "https://github.com/vittominacori"
+                }
+            ],
+            "description": "A PHP wrapper for CoinMarketCap API",
+            "homepage": "https://github.com/vittominacori/coinmarketcap-php",
+            "keywords": [
+                "client",
+                "coinmarketcap",
+                "crypto",
+                "exchange"
+            ],
+            "time": "2019-12-08T16:57:24+00:00"
         },
         {
             "name": "yiisoft/yii2",
@@ -4841,7 +4949,9 @@
         "jaggedsoft/php-binance-api": 20,
         "dzarezenko/poloniex-api": 20,
         "guzzlehttp/guzzle": 20,
-        "ccxt/ccxt": 20
+        "ccxt/ccxt": 20,
+        "bower-asset/font-awesome": 20,
+        "vittominacori/coinmarketcap-php": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,

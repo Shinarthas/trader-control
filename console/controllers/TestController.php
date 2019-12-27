@@ -2,10 +2,14 @@
 namespace console\controllers;
 
 use api\v1\renders\ResponseRender;
+use backend\assets\DepthAnalizer;
 use common\assets\BikiApi;
+use common\assets\CoinMarketCapApi;
 use common\components\ApiRequest;
 use common\models\Account;
+use common\models\Campaign;
 use common\models\CurrencyPrice;
+use common\models\Trading;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
@@ -44,6 +48,20 @@ class TestController extends Controller
 	    $res=$biki->depth(strtolower('ethbtc'));
 	    print_r($res);
     }
+    public function actionPeriod(){
+        //$biki=new BikiApi();
+        $res=Trading::getPeriod();
+        print_r($res);
+    }
+    public function actionGetUsdt(){
+	    Trading::getUsdtWithBtc();
+    }
+    public function actionGetBtc(){
+        Trading::getBtcWithUsdt();
+    }
+    public function actionCmc(){
+	    CoinMarketCapApi::top();
+    }
     public function actionGraph(){
 	    $data=[
 	        'id'=>"TRX",
@@ -65,5 +83,21 @@ class TestController extends Controller
 	    $promotoin=Promotion::findOne(8);
 	    $account=$promotoin->calculateAccount(1,0.1);
 	    print_r(ArrayHelper::toArray($account));
+    }
+    public function actionDepth(){
+	    $res=DepthAnalizer::getPossibility('BTC');
+	    print_r($res);
+    }
+    public function actionCampaign(){
+        $campaign=Campaign::findOne(1);
+        $campaign->index();
+    }
+    public function actionCampaignToUsdt(){
+        $campaign=Campaign::findOne(1);
+        $campaign->getUsdtWithEntrance();
+    }
+    public function actionAllWithUsdt(){
+        $campaign=Campaign::findOne(1);
+        $campaign->getUsdtWithAll();
     }
 }

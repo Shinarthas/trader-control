@@ -101,78 +101,78 @@ class Task extends \yii\db\ActiveRecord
             'loaded_at' => 'Loaded At',
         ];
     }
-	
-	
-	public function make() {
 
-		$this->status = self::STATUS_STARTED;
-	
-		$promotion = $this->promotion;
-		if($promotion->enabled == 0)
-			return false;
-		$this->save();
-		if(!$res=$this->calculateRate())
-		{
-			$this->status = self::STATUS_PRICE_ERROR;
-			$this->save();
-			return false;
-		}
-		if($promotion->market_id==4)
-		{
-			if($promotion->second_currency->data['pangu_step']==10)
-				$this->rate = round($this->rate,5);
-			elseif($promotion->second_currency->data['pangu_step']==100)
-				$this->rate = round($this->rate,4);
-			elseif($promotion->second_currency->data['pangu_step']==1000)
-				$this->rate = round($this->rate,3);
-			else
-				$this->rate = round($this->rate,2);
-		}
-		
-		$tokens_count = round($this->value/$this->rate, 1);
-		
-		if($this->sell == 1 AND (int)$promotion->settings['fixed_tasks_currency_two']!=0) {
-			$tokens_count = $promotion->settings['fixed_tasks_currency_two'];
-		}
+
+    public function make() {
+
+        $this->status = self::STATUS_STARTED;
+
+        $promotion = $this->promotion;
+        if($promotion->enabled == 0)
+            return false;
+        $this->save();
+        if(!$res=$this->calculateRate())
+        {
+            $this->status = self::STATUS_PRICE_ERROR;
+            $this->save();
+            return false;
+        }
+        if($promotion->market_id==4)
+        {
+            if($promotion->second_currency->data['pangu_step']==10)
+                $this->rate = round($this->rate,5);
+            elseif($promotion->second_currency->data['pangu_step']==100)
+                $this->rate = round($this->rate,4);
+            elseif($promotion->second_currency->data['pangu_step']==1000)
+                $this->rate = round($this->rate,3);
+            else
+                $this->rate = round($this->rate,2);
+        }
+
+        $tokens_count = round($this->value/$this->rate, 1);
+
+        if($this->sell == 1 AND (int)$promotion->settings['fixed_tasks_currency_two']!=0) {
+            $tokens_count = $promotion->settings['fixed_tasks_currency_two'];
+        }
         $this->tokens_count = $tokens_count;
-		if($promotion->settings['calculate_account']!=1)
-			$account = $this->promotion->accounts[array_rand($this->promotion->accounts,1)];
-		else
-		{
+        if($promotion->settings['calculate_account']!=1)
+            $account = $this->promotion->accounts[array_rand($this->promotion->accounts,1)];
+        else
+        {
             Log::log(['calculate']);
             $account = $promotion->calculateAccount($this->sell,$this->tokens_count);
 
-			if(!$account || empty($account) || $account===0)
-			{
+            if(!$account || empty($account) || $account===0)
+            {
                 Log::log(['account'=>$account,'normas'=>'normas']);
-				$this->status = self::STATUS_ACCOUNT_NOT_FOUND;
-				$this->save();
-				return false;
-			}
+                $this->status = self::STATUS_ACCOUNT_NOT_FOUND;
+                $this->save();
+                return false;
+            }
             Log::log(['account'=>ArrayHelper::toArray($account),'gavno'=>'gavno']);
-		}
-			
-		$this->account_id = $account->id;
-		
+        }
 
-  	$result = ApiRequest::accounts('v1/orders/create', 
-			[
-			'id'=>$this->id,
-			'sell'=>$this->sell,
-			'market_id'=>$promotion->market_id,
-			'currency_one'=>$promotion->currency_one, 
-			'currency_two' => $promotion->currency_two, 
-			'account_id' => $this->account_id,
-			'tokens_count' => $this->tokens_count,
-			'created_at' => $this->created_at,
-			'promotion_id' => $this->promotion_id,
-			'rate' => $this->rate,
-			'use_paid_proxy' => $this->promotion->is_paid_proxy,
-			]);
-		if($result->status) {
-			$this->status = self::STATUS_CREATED;
-			//$this->progress = 100;
-			$this->created_at = time();
+        $this->account_id = $account->id;
+
+
+        $result = ApiRequest::accounts('v1/orders/create',
+            [
+                'id'=>$this->id,
+                'sell'=>$this->sell,
+                'market_id'=>$promotion->market_id,
+                'currency_one'=>$promotion->currency_one,
+                'currency_two' => $promotion->currency_two,
+                'account_id' => $this->account_id,
+                'tokens_count' => $this->tokens_count,
+                'created_at' => $this->created_at,
+                'promotion_id' => $this->promotion_id,
+                'rate' => $this->rate,
+                'use_paid_proxy' => $this->promotion->is_paid_proxy,
+            ]);
+        if($result->status) {
+            $this->status = self::STATUS_CREATED;
+            //$this->progress = 100;
+            $this->created_at = time();
             if(isset($result->data->external_id)){
                 $this->external_id=$result->data->external_id;
             }
@@ -180,13 +180,61 @@ class Task extends \yii\db\ActiveRecord
             //update same info on statistics serve
             $resultStatistics = ApiRequest::statistics('v1/orders/create',
                 ArrayHelper::toArray($this));
-		}
+        }
 
-		$this->save();
-		
-		return $result;
-	}
+        $this->save();
 
+        return $result;
+    }
+
+    //это для новой штуки
+    public function make2($currency_one,$currency_two) {
+
+        $this->status = self::STATUS_STARTED;
+
+        $this->save();
+
+
+        $tokens_count = round($this->value/$this->rate, 1);
+
+
+        $this->tokens_count = $tokens_count;
+
+
+        $account=Account::findOne($this->account_id);
+
+
+        $result = ApiRequest::accounts('v1/orders/create',
+            [
+                'id'=>$this->id,
+                'sell'=>$this->sell,
+                'market_id'=>$account->type,
+                'currency_one'=>$currency_one,
+                'currency_two' => $currency_two,
+			'account_id' => $this->account_id,
+			'tokens_count' => $this->tokens_count,
+			'created_at' => $this->created_at,
+			'promotion_id' => $this->promotion_id,
+			'rate' => $this->rate,
+			'use_paid_proxy' => 0,
+			]);
+        if($result->status) {
+            $this->status = self::STATUS_CREATED;
+            //$this->progress = 100;
+            $this->created_at = time();
+            if(isset($result->data->external_id)){
+                $this->external_id=$result->data->external_id;
+            }
+            Log::log(['good order']);
+            //update same info on statistics serve
+            $resultStatistics = ApiRequest::statistics('v1/orders/create',
+                ArrayHelper::toArray($this));
+        }
+
+        $this->save();
+
+        return $result;
+    }
 	public static function possibility(Promotion $promotion){
         //die('die');
         echo $promotion->id;
