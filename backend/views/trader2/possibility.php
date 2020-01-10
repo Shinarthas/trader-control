@@ -74,7 +74,9 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 dataPoints: gData
             }
         ];
-        for (var i=0;i<gData.length;i++){
+        for (var i=0;i<gData.length-timeout/600-1;i++){
+            if(totalData.length>100*10)
+                break;
             var bid_now=gData[i].y;
             for (var j=0;j<gaps.length;j++){
                 if (typeof gData[i-j]=== 'undefined')
@@ -106,9 +108,18 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                         var ending_point=i;
                         var ii_global=0;//мне это нужно знать, чтобы сказать когдая вышел из ставки, тут возможен баг
                         //когда  ставки игралась еще и еще но мы не отображаем это
-                        for (var ii=i;ii<gData.length, ii<i+timeout/600;ii++){// так как графики 5 мин, то разделим
+                        for (var ii=i;ii<gData.length-1;ii++){// так как графики 5 мин, то разделим
+                            if(ii>i+timeout/600){
+                                console.log('break',ii,i,i+timeout/600+10)
+                                break;
+                            }
+
                             ii_global=ii;
                             ending_point=ii;
+                            //if(typeof gData[ii].y=='undefined'){
+
+                                //console.log(ii,gData[ii],i,gData.length );
+
                             value_current=gData[ii].y;
                             strategyProcess.push(gData[ii]);
                             if(value_current>value_start*(1+percent_profit))
@@ -136,7 +147,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                         order.profit=(100000/value_start*value_current)-100000;
                         orders.push(order);
                         //i=parseInt((i+ii_global)/2);//нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
-                        i=ii_global;//нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
+                        //нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
                         //тут возможен баг описанный выше
                     }
                 }
@@ -170,18 +181,39 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         $.each(orders, function (key, val) {
             profit+=val.profit;
             var o="<div class='order'>" +
-                "<div class='col-md-2'>"+val.pair+"</div>" +
-                "<div class='col-md-2'>"+timeConverter(val.date_start)+"</div>" +
-                "<div class='col-md-2'>"+val.rate_start+" -->  "+val.rate_end+"</div>" +
-                "<div class='col-md-2'>"+timeConverter(val.date_end)+"</div>" +
-                "<div class='col-md-2'>$"+val.usdt_bank+"</div>" +
-                "<div class='col-md-2'>"+val.profit.toFixed(2)+"</div>" +
+                "<div class='col-md-1'>id;1;5;"+0+";</div>" +
+                "<div class='col-md-1'>сколько токенов;</div>" +
+                "<div class='col-md-1'>"+val.rate_start+";100;{'asd':'asd'};1;</div>" +
+                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
+                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
+                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
+                "<div class='col-md-1'>"+val.pair+";;;</div>" +
+                //"<div class='col-md-1'>"+val.rate_start+";"+val.rate_end+";</div>" +
+                //"<div class='col-md-1'>"+timeConverter(val.date_end)+";</div>" +
+                //"<div class='col-md-1'>$"+val.usdt_bank+";</div>" +
+                //"<div class='col-md-1'>"+val.profit.toFixed(2)+";</div>" +
+                "</div>";
+            $('.orders').append(o)
+
+            o="<div class='order'>" +
+                "<div class='col-md-1'>id;1;5;"+1+";</div>" +
+                "<div class='col-md-1'>сколько токенов;</div>" +
+                "<div class='col-md-1'>"+val.rate_end+";100;{'asd':'asd'};1;</div>" +
+                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
+                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
+                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
+                "<div class='col-md-1'>"+val.pair+";;;</div>" +
+                //"<div class='col-md-1'>"+val.rate_start+";"+val.rate_end+";</div>" +
+                //"<div class='col-md-1'>"+timeConverter(val.date_end)+";</div>" +
+                //"<div class='col-md-1'>$"+val.usdt_bank+";</div>" +
+                //"<div class='col-md-1'>"+val.profit.toFixed(2)+";</div>" +
                 "</div>";
             $('.orders').append(o)
         });
         $('.profit-value').text('$'+profit.toFixed(2));
     }
     function timeConverter(UNIX_timestamp){
+        return UNIX_timestamp;
         var a = new Date(UNIX_timestamp * 1000);
         var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         var year = a.getFullYear();
@@ -189,7 +221,12 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         var date = a.getDate();
         var hour = a.getHours();
         var min = a.getMinutes();
-        var sec = a.getSeconds();
+        //var sec = a.getSeconds();
+        var sec = '00';
+        if(hour<10)
+            hour='0'+hour; 
+        if(min<10)
+            min='0'+min;
         var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
         return time;
     }

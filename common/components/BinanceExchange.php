@@ -21,7 +21,7 @@ class BinanceExchange {
 
 		//$proxy = $account->proxy;
         $api = new Binance\API($account->data['api_key'],$account->data['secret']);
-        $currency_pair=$currency_two->symbol.$currency_one->symbol;
+        $currency_pair=$currency_one->symbol.$currency_two->symbol;
 
         //TODO:support proxy
         $order = $api->sell($currency_pair, $tokens_count, $price);
@@ -36,7 +36,7 @@ class BinanceExchange {
 
         //$proxy = $account->proxy;
         $api = new Binance\API($account->data['api_key'],$account->data['secret']);
-        $currency_pair=$currency_two->symbol.$currency_one->symbol;
+        $currency_pair=$currency_one->symbol.$currency_two->symbol;
 
         //TODO:support proxy
         $order = $api->buy($currency_pair, $tokens_count, $price);
@@ -46,8 +46,8 @@ class BinanceExchange {
 	public static function exchangeRates($currency_one, $currency_two) {
 		$api = new Binance\API();
         //TODO: �������� �� ������ �� �� � �������� �� ������
-        //$currency_pair=$currency_two->symbol.$currency_one->symbol;
-        $currency_pair=$currency_two->symbol.$currency_one->symbol;//  we have to keep same structure all over
+        //$currency_pair=$currency_one->symbol.$currency_two->symbol;
+        $currency_pair=$currency_one->symbol.$currency_two->symbol;//  we have to keep same structure all over
         error_reporting(0);//disable notice for binance api
         $depth = $api->depth($currency_pair);
         return [
@@ -62,7 +62,7 @@ class BinanceExchange {
         $api = new Binance\API($account->data->api_key,$account->data->secret);
         $currency_one=Currency::findOne($promotion['currency_one']);
         $currency_two=Currency::findOne($promotion['currency_two']);
-        $currency_pair=$currency_two->symbol.$currency_one->symbol;
+        $currency_pair=$currency_one->symbol.$currency_two->symbol;
         $openorders = $api->openOrders();
         //print_r($openorders);
         return $openorders;
@@ -79,7 +79,7 @@ class BinanceExchange {
         $currency_one=$order->getMain_currency()->one();
         $currency_two=$order->getSecond_currency()->one();
 
-        $currency_pair=$currency_two->symbol.$currency_one->symbol;
+        $currency_pair=$currency_one->symbol.$currency_two->symbol;
         $response = $api->cancel("ETHBTC", $order->market_order_id);
 	    return $response;
 	}

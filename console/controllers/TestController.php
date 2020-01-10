@@ -100,4 +100,20 @@ class TestController extends Controller
         $campaign=Campaign::findOne(1);
         $campaign->getUsdtWithAll();
     }
+    public function actionCampaignBalance(){
+        $campaign=Campaign::findOne(1);
+        $res=$campaign->getBalance();
+
+        print_r($res);
+    }
+    public function actionCampaignGetEntrance(){
+        $campaign=Campaign::findOne(1);
+        $campaign->getEntranceWithUsdt();
+    }
+
+    public function actionCampaignCloseOutdated(){
+        $campaign=Campaign::findOne(1);
+        $campaign->closeOutdated();
+    }
+
 }

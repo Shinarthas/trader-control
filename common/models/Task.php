@@ -195,14 +195,13 @@ class Task extends \yii\db\ActiveRecord
         $this->save();
 
 
-        $tokens_count = round($this->value/$this->rate, 1);
+        //$tokens_count = round($this->value/$this->rate, 1);
 
 
-        $this->tokens_count = $tokens_count;
+        //$this->tokens_count = $tokens_count;
 
 
         $account=Account::findOne($this->account_id);
-
 
         $result = ApiRequest::accounts('v1/orders/create',
             [
@@ -218,17 +217,35 @@ class Task extends \yii\db\ActiveRecord
 			'rate' => $this->rate,
 			'use_paid_proxy' => 0,
 			]);
-        if($result->status) {
+        if(isset($result->status) && $result->status) {
             $this->status = self::STATUS_CREATED;
             //$this->progress = 100;
             $this->created_at = time();
             if(isset($result->data->external_id)){
                 $this->external_id=$result->data->external_id;
             }
-            Log::log(['good order']);
             //update same info on statistics serve
             $resultStatistics = ApiRequest::statistics('v1/orders/create',
                 ArrayHelper::toArray($this));
+        }else{
+//            echo "--------------------\n\n";
+            //echo $account->type."\n";
+            print_r([
+                'id'=>$this->id,
+                'sell'=>$this->sell,
+                'market_id'=>$account->type,
+                'currency_one'=>$currency_one,
+                'currency_two' => $currency_two,
+                'account_id' => $this->account_id,
+                'tokens_count' => $this->tokens_count,
+                'created_at' => $this->created_at,
+                'promotion_id' => $this->promotion_id,
+                'rate' => $this->rate,
+                'use_paid_proxy' => 0,
+            ]);
+            //print_r($result);
+//            die();
+
         }
 
         $this->save();
@@ -478,8 +495,11 @@ class Task extends \yii\db\ActiveRecord
 	}
 	
 	public function cancelOrder() {
-        $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => $this->promotion->is_paid_proxy, ]);
+        //$res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => $this->promotion->is_paid_proxy, ]);
+        $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => 0, ]);
+        print_r([ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => 0, ]);
         if($res->status){
+            echo 'canceled';
             $this->status=Task::STATUS_CANCELED;
             $this->canceled = 1;
             $this->save();

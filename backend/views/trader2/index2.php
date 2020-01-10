@@ -12,6 +12,18 @@ use yii\web\View;
 /* @var $form yii\bootstrap\ActiveForm */
 /* @var $model \common\models\LoginForm */
 $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
+
+function getPeriod($date){
+    $hours=date("H",$date);
+    if($hours<6)
+        return 1;
+    if($hours<12)
+        return 2;
+    if($hours<18)
+        return 3;
+    if($hours<25)
+        return 4;
+}
 ?>
 
 
@@ -32,18 +44,21 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 <th>tokens</th>
                 <th>status</th>
                 <th>profit</th>
+                <th>period</th>
             </tr>
             </thead>
             <tbody>
 
-            <? for($i=0;$i<count($orders);$i++): ?>
+            <?
+            $total_profit=0;
+            for($i=0;$i<count($orders);$i++): ?>
                 <? $t=$orders[$i]; ?>
-                <?php if($t->sell==0) continue; ?>
+                <?php if($t->sell==1) continue; ?>
                 <tr>
                     <td><?=$t->id;?></td>
-                    <td><?=date("d/m/y H:i", $t->time);?></td>
+                    <td><?=date("Y-m-d H:i:s", $t->time-2*3600);?></td>
                     <td><?=$t->currency_one;?></td>
-                    <td><?php if($orders[$i+1]->sell==0 && $orders[$i+1]->currency_one==$t->currency_one) {echo $orders[$i+1]->rate.'->';}?><?=$t->rate;?></td>
+                    <td><?php if($orders[$i+1]->sell==1 && $orders[$i+1]->currency_one==$t->currency_one) {echo $orders[$i]->rate.'->';}?><?=$orders[$i+1]->rate;?></td>
                     <td><?=$t->tokens_count;?></td>
                     <td><? if($t->status==1){echo "<b style='color:red'>error</b>";} else if($t->status==2){echo "OK";
                             if($t->progress != 100) {
@@ -57,25 +72,46 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 
                         ?></td>
                     <td>
-                        <?php if($orders[$i+1]->sell==0 && $orders[$i+1]->currency_one==$t->currency_one){
-                            $money_was=$orders[$i+1]->rate*$orders[$i+1]->tokens_count;
-                            $money_now=$money_was;
+                        <?php if($orders[$i+1]->sell==1 && $orders[$i+1]->currency_one==$t->currency_one){
+
+                            $money_was=$orders[$i]->rate*$orders[$i]->tokens_count;
+                            $money_now=$orders[$i+1]->rate*$orders[$i]->tokens_count;
+                            //echo "(".$money_was." -,- ".$money_now.")";
                             //if($t->status==\common\models\DemoTask::STATUS_CREATED)
                             //print_r($trading_pairs_remapped[$t->currency_one.$t->currency_two]->statistics->data->now->bid);
-                            $money_now=$trading_pairs_remapped[$t->currency_one.$t->currency_two]->statistics->data->now->bid*$orders[$i+1]->tokens_count;
-                            if($t->status==\common\models\DemoTask::STATUS_COMPLETED)
-                                $money_now=$t->rate+$orders[$i+1]->tokens_count;
-
+                            //$money_now=$trading_pairs_remapped[$t->currency_one.$t->currency_two]->statistics->data->now->bid*$orders[$i+1]->tokens_count;
+//                            if($t->status==\common\models\DemoTask::STATUS_COMPLETED)
+//                                $money_now=$t->rate+$orders[$i+1]->tokens_count;
+                            $total_profit+=$perccent;
                             $perccent=($money_now-$money_was)/$money_now*100;
-                            echo  $perccent.'%';
+                            echo  number_format($perccent,2).'%';
                         }?>
                     </td>
-
+                   <td><?php echo getPeriod($t->time-2*3600)?></td>
                 </tr>
 
             <? endfor; ?>
             <tbody>
         </table>
+        <pre>
+        <?php
+        $data1=ApiRequest::statistics('v1/trader2/graphic',['symbol'=>'BTCUSDT','date_start'=>date('Y-m-d H:i:s',strtotime($date_start)),'date_end'=>date('Y-m-d H:i:s',strtotime($date_start)+900),'limit'=>1]);
+        reset($data1->data); //Ensure that we're at the first element
+        $key = key($data1->data);
+        $open1=$data1->data->{$key}->open;
+
+
+
+        $data2=ApiRequest::statistics('v1/trader2/graphic',['symbol'=>'BTCUSDT','date_start'=>date('Y-m-d H:i:s',strtotime($date_start)+24*3600),'date_end'=>date('Y-m-d H:i:s',strtotime($date_start)+24*3600+900),'limit'=>1]);
+        reset($data2->data); //Ensure that we're at the first element
+        $key = key($data2->data);
+        $open2=$data2->data->{$key}->open;
+
+
+
+        ?>
+            </pre>
+        <h1>Прифит на торгах: <span style="color: lightgreen"><?= number_format($total_profit/10,2);   ?>%</span>; Колебание битка: <?= number_format(($open2-$open1)/$open1*100,2) ;?>% / $<?=$open2-$open1 ?></h1>
     </div>
 
 </div>

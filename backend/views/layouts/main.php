@@ -244,8 +244,9 @@ AppAsset::register($this);
 			<a href="/">Home</a>
 			<a href="/">Markets</a>
 			<a href="/trader2">Trader 2.0</a>
-			<a href="/trader2/possibility?symbol=XRPBTC&percent_drop=0.006&percent_bounce=0.001&percent_profit=0.004&timeout=14400">Trader 2.0 possibility</a>
+			<a href="/trader2/possibility?symbol=XRPBTC&percent_drop=0.006&percent_bounce=0.001&percent_profit=0.004&timeout=14400&date_start=2019-01-01">Trader 2.0 possibility</a>
 			<a href="/trader2/pairs">Pair rating</a>
+			<a href="/trader2/cmc">Cmc</a>
 			<a href="/possibility">possibility</a>
 			<a href="/account">Accounts</a>
 			<a href="/currency">Currencies</a>

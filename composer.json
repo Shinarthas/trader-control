@@ -23,7 +23,8 @@
         "guzzlehttp/guzzle": "^7.0@dev",
         "ccxt/ccxt": "dev-master",
         "bower-asset/font-awesome": "dev-master",
-        "vittominacori/coinmarketcap-php": "dev-master"
+        "vittominacori/coinmarketcap-php": "dev-master",
+        "fpdf/fpdf": "dev-master"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",
