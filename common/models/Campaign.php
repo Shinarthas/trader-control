@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use backend\assets\DepthAnalizer;
 use common\components\ApiRequest;
 use Yii;
 use yii\helpers\ArrayHelper;
@@ -164,7 +165,7 @@ class Campaign extends \yii\db\ActiveRecord
                         $sell_task->promotion_id=0;
                         $sell_task->status=0;
                         $sell_task->sell=1;
-                        $sell_task->rate=$trading_pair->statistics->{'now'}->ask*1.004;//тут коеф профита
+                        $sell_task->rate=$trading_pair->statistics->{'now'}->ask*($this->strategy['profit']);//тут коеф профита
                         $tokens_count=0.01;
                         foreach ($this->balances[$account]->balances as $balance){
                             if($balance->name==$local_symbol){
@@ -221,7 +222,7 @@ class Campaign extends \yii\db\ActiveRecord
     }
     public function closeOutdated(){//добавить id  кампании
         $tasks=Task::find()->where(['promotion_id'=>0])
-        //->andWhere(['not in','status',[0,4,5]])->andWhere(['<','time',time()-$this->timeout])
+        ->andWhere(['not in','status',[0,4,5]])->andWhere(['<','time',time()-$this->timeout])
         ->andWhere(['not in','status',[0,1,4,5]])->andWhere(['>','time',1])
         ->all();
 
@@ -231,17 +232,17 @@ class Campaign extends \yii\db\ActiveRecord
 
         $this->getBalance();
     }
-    public function index(){
-        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'includes'=>$this->entrance_currency]);
-        $trading_pairs=$trading_pairs->data;
-
-        foreach ($trading_pairs as $trading_pair){
-            $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
-            $trading_pair->statistics=$tmp->data;
-
-        }
-        //полумать что будет если USDTUSDT
-        //получим входную  валюту
+    public function index($trading_pairs){
+//        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'includes'=>$this->entrance_currency]);
+//        $trading_pairs=$trading_pairs->data;
+//
+//        foreach ($trading_pairs as $trading_pair){
+//            $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
+//            $trading_pair->statistics=$tmp->data;
+//
+//        }
+//        //полумать что будет если USDTUSDT
+//        //получим входную  валюту
         $entrance_usdt=ApiRequest::statistics('v1/trader2/info',['pair'=>$this->entrance_currency.'USDT']);
         $entrance_usdt=$entrance_usdt->data;
 
@@ -434,18 +435,42 @@ class Campaign extends \yii\db\ActiveRecord
     }
     public function getTriggerScore($symbol){
         $trigger_score=0;
-
-        //тут мой код но его нужно потом завернуть в if  и переделать
-        foreach ($this->trading_pairs as $tp){
-            if($tp->trading_paid==$symbol.$this->entrance_currency){
-                $trading_pair=$tp;
-                break;
+        foreach ($this->settings as $key=>$strategy){
+            //тут мой код но его нужно потом завернуть в if  и переделать
+            foreach ($this->trading_pairs as $tp){
+                if($tp->trading_paid==$symbol.$this->entrance_currency){
+                    $trading_pair=$tp;
+                    break;
+                }
+            }
+            if($strategy['parameter']=='bounce_rate'){
+                if(self::findThresholdBreak($strategy['percent_drop'],$strategy['percent_bounce'],$trading_pair->statistics))
+                    $trigger_score+=$strategy['value'];
+            }
+            if($strategy['parameter']=='depth'){
+                $chance=DepthAnalizer::getPossibility($trading_pair->trading_paid);
+                switch ($strategy['sign']){
+                    case '>':
+                        if($chance>$strategy['limit'])
+                            $trigger_score+=$strategy['value'];
+                        break;
+                    case '<':
+                        if($chance<$strategy['limit'])
+                            $trigger_score+=$strategy['value'];
+                        break;
+                    default:
+                        if($chance>$strategy['limit'])
+                            $trigger_score+=$strategy['value'];
+                        break;
+                }
             }
         }
-        $trigger_score+=self::findThresholdBreak(0.06,0.01,$trading_pair->statistics);
 
 
-        return 100;
+
+
+        //return 100;
+
         return $trigger_score;
     }
 

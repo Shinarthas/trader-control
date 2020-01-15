@@ -103,11 +103,10 @@ class Trader2Controller extends Controller
             ->orderBy([
             'time' => SORT_ASC,
             'id'=>SORT_ASC
-        ])->limit(300)
+        ])->limit(400)
             //->createCommand()->rawSql;
             ->all();
-        //echo $orders;
-        //die();
+
         foreach ($trading_pairs as $trading_pair){
             $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
             $trading_pair->statistics=$tmp;
@@ -426,7 +425,6 @@ class Trader2Controller extends Controller
      public function actionIndex4(){
 	    $get=Yii::$app->request->get();
 	    if(isset($get['date_start'])){
-	        echo "Aloooo";
             $date_start=date("Y-m-01 00:00:00",$get['date_start']);
         }
 	    else
@@ -444,13 +442,17 @@ class Trader2Controller extends Controller
                 break;
              //echo  "time ";
              //continue;
-             $orders=DemoTask::find()->where(['>','time',$i])
-                 ->andWhere(['<','time',$i+24*3600])
-                 ->andWhere(['<','time',$now_limit-2*3600])
+             $orders=DemoTask::find()->where(['>','time',$i+2*3600])
+                 ->andWhere(['<','time',$i+24*3600+2*3600])
+                 //->andWhere(['<','time',$now_limit-2*3600])
                  ->orderBy([
                      'time' => SORT_ASC,
                      'id'=>SORT_ASC
                  ])
+                 ->limit(400)
+//                 ->createCommand()->rawSql;
+//             echo $orders." ";
+
                  ->all();
 
              $trade_profit=0;
@@ -469,7 +471,8 @@ class Trader2Controller extends Controller
 //                                $money_now=$t->rate+$orders[$j+1]->tokens_count;
 
                      $perccent=($money_now-$money_was)/$money_now*100;
-                     $trade_profit+=$perccent;
+                     $trade_profit+=($perccent);
+                     //$trade_profit+=$perccent;
                  }
              }
              $events[]=[

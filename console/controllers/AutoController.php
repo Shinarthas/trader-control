@@ -93,7 +93,7 @@ class AutoController extends Controller
 
          $campaings=Campaign::find()->all();
          foreach ($campaings as $campaing){
-             $campaing->index();
+             $campaing->index($trading_pairs);
          }
 
      }

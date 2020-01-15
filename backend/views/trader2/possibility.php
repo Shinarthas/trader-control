@@ -38,8 +38,8 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         <div class="col-md-2">Date Start</div>
         <div class="col-md-2">Open/Close Rate</div>
         <div class="col-md-2">Date End</div>
-        <div class="col-md-2">Bank</div>
-        <div class="col-md-2">Profit</div>
+        <div class="col-md-2">profit</div>
+        <div class="col-md-2">profit %</div>
     </div>
 </div>
 <div class="row">
@@ -127,27 +127,31 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                         }
                         //выберем цвет для графика в зависимосит от того выиграли  или проиграли
                         if(value_current>value_start){
+
                             var color='#4fcc37';
+
+
+                            totalData.push({
+                                color:color,
+                                type: "line", //change it to line, area, column, pie, etc
+                                dataPoints: strategyProcess
+                            })
+                            //создаем ордер
+                            var order={};
+                            order.pair=pair;
+                            order.date_start=gData[i].x;
+                            order.date_end=gData[ii_global].x;
+                            order.rate_start=value_start;
+                            order.rate_end=value_current;
+                            order.usdt_bank=100000;
+                            order.profit=(100000/value_start*value_current)-100000;
+                            orders.push(order);
                         }else{
                             var color='#fb564c';
                         }
-                        totalData.push({
-                            color:color,
-                            type: "line", //change it to line, area, column, pie, etc
-                            dataPoints: strategyProcess
-                        })
-                        //создаем ордер
-                        var order={};
-                        order.pair=pair;
-                        order.date_start=gData[i].x;
-                        order.date_end=gData[ii_global].x;
-                        order.rate_start=value_start;
-                        order.rate_end=value_current;
-                        order.usdt_bank=100000;
-                        order.profit=(100000/value_start*value_current)-100000;
-                        orders.push(order);
+
                         //i=parseInt((i+ii_global)/2);//нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
-                        //нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
+                        i=ii_global;//нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
                         //тут возможен баг описанный выше
                     }
                 }
@@ -181,32 +185,13 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         $.each(orders, function (key, val) {
             profit+=val.profit;
             var o="<div class='order'>" +
-                "<div class='col-md-1'>id;1;5;"+0+";</div>" +
-                "<div class='col-md-1'>сколько токенов;</div>" +
-                "<div class='col-md-1'>"+val.rate_start+";100;{'asd':'asd'};1;</div>" +
-                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
-                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
-                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
-                "<div class='col-md-1'>"+val.pair+";;;</div>" +
-                //"<div class='col-md-1'>"+val.rate_start+";"+val.rate_end+";</div>" +
-                //"<div class='col-md-1'>"+timeConverter(val.date_end)+";</div>" +
-                //"<div class='col-md-1'>$"+val.usdt_bank+";</div>" +
-                //"<div class='col-md-1'>"+val.profit.toFixed(2)+";</div>" +
-                "</div>";
-            $('.orders').append(o)
-
-            o="<div class='order'>" +
-                "<div class='col-md-1'>id;1;5;"+1+";</div>" +
-                "<div class='col-md-1'>сколько токенов;</div>" +
-                "<div class='col-md-1'>"+val.rate_end+";100;{'asd':'asd'};1;</div>" +
-                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
-                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
-                "<div class='col-md-1'>"+timeConverter(val.date_start)+";</div>" +
-                "<div class='col-md-1'>"+val.pair+";;;</div>" +
-                //"<div class='col-md-1'>"+val.rate_start+";"+val.rate_end+";</div>" +
-                //"<div class='col-md-1'>"+timeConverter(val.date_end)+";</div>" +
-                //"<div class='col-md-1'>$"+val.usdt_bank+";</div>" +
-                //"<div class='col-md-1'>"+val.profit.toFixed(2)+";</div>" +
+                "<div class='col-md-2'>"+val.pair+"</div>" +
+                "<div class='col-md-2'>"+timeConverter(val.date_start)+"</div>" +
+                "<div class='col-md-2'>"+val.rate_start+" -->  "+val.rate_end+"</div>" +
+                "<div class='col-md-2'>"+timeConverter(val.date_end)+"</div>" +
+                //"<div class='col-md-2'>$"+val.usdt_bank+"</div>" +
+                "<div class='col-md-2'>"+val.profit.toFixed(2)+"</div>" +
+                "<div class='col-md-2'>"+(val.profit.toFixed(2)/val.usdt_bank*100).toFixed(2)+"%</div>" +
                 "</div>";
             $('.orders').append(o)
         });
