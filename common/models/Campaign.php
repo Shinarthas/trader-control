@@ -110,7 +110,10 @@ class Campaign extends \yii\db\ActiveRecord
                         $buy_task->promotion_id=0;
                         $buy_task->status=0;
                         $buy_task->sell=0;
+                        $buy_task->currency_one=$local_symbol;
+                        $buy_task->currency_two=$this->entrance_currency;
                         $buy_task->rate=$trading_pair->statistics->{'now'}->bid*1.005;//чтоб точно купить
+                        $buy_task->start_rate=$trading_pair->statistics->{'now'}->bid;//чтоб точно купить
                         $buy_task->tokens_count=
                             $this->current_usdt_volume*$random_per/
                             $this->entrance_usdt->{'now'}->bid/
@@ -119,13 +122,16 @@ class Campaign extends \yii\db\ActiveRecord
                         $buy_task->value=($buy_task->tokens_count*$buy_task->rate);
                         $buy_task->progress=0;
                         $buy_task->time=time();
+                        //если ставка меньше  $1.5, то не ставить ордер
+                        if($buy_task->tokens_count*$buy_task->rate*$this->entrance_usdt->{'now'}->bid<1.5)
+                            continue;
+                        echo 'usdt-->'.number_format($buy_task->tokens_count*$buy_task->rate*$this->entrance_usdt->{'now'}->bid,2);
                         if($buy_task->tokens_count<0.00001)//у нас просто нет этой валюты, нас непропустят
                             continue;
                         $is_continue=0;//тригер для пропуска ставки если у нас нет денег
                         foreach ($this->balances[$account]->balances as $balance) {
                             if(!in_array($this->entrance_currency, //это значит у нас ее вообще нет на балансе
                                 array_column(json_decode(json_encode($this->balances[$account]->balances),true),'name'))){
-
                                 echo " no currency at all ";
                                 $is_continue = 0;
                                 break;
@@ -133,7 +139,6 @@ class Campaign extends \yii\db\ActiveRecord
                             if ($balance->name == $this->entrance_currency) {
                                 if ($buy_task->tokens_count > $balance->value/$trading_pair->statistics->{'now'}->bid){//у нас просто нет столько входной валюты
                                     $is_continue = 1;
-                                    echo "---------".$buy_task->tokens_count." ".($balance->value/$trading_pair->statistics->{'now'}->bid)." $local_symbol ------"."\n";
                                 }
                             }
                         }
@@ -165,7 +170,10 @@ class Campaign extends \yii\db\ActiveRecord
                         $sell_task->promotion_id=0;
                         $sell_task->status=0;
                         $sell_task->sell=1;
-                        $sell_task->rate=$trading_pair->statistics->{'now'}->ask*($this->strategy['profit']);//тут коеф профита
+                        $sell_task->currency_one=$local_symbol;
+                        $sell_task->currency_two=$this->entrance_currency;
+                        $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;//тут коеф профита
+                        $sell_task->rate=$trading_pair->statistics->{'now'}->ask*($this->strategy['profit']>1?$this->strategy['profit']:$this->strategy['profit']+1);//тут коеф профита
                         $tokens_count=0.01;
                         foreach ($this->balances[$account]->balances as $balance){
                             if($balance->name==$local_symbol){
@@ -177,7 +185,11 @@ class Campaign extends \yii\db\ActiveRecord
                             continue;
                         }
 
-                        $sell_task->tokens_count=$tokens_count*0.98;
+                        $sell_task->tokens_count=$tokens_count*0.99;
+                        //если ставка меньше  $1.5, то не ставить ордер
+                        if($sell_task->tokens_count*$sell_task->rate*$this->entrance_usdt->{'now'}->bid<1.5)
+                            continue;
+                        echo 'usdt-->'.number_format($sell_task->tokens_count*$sell_task->rate*$this->entrance_usdt->{'now'}->bid,2);
                         $sell_task->random_curve=0;
                         $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
                         $sell_task->progress=0;
@@ -220,14 +232,151 @@ class Campaign extends \yii\db\ActiveRecord
             }
         }
     }
-    public function closeOutdated(){//добавить id  кампании
+    public function check(){
         $tasks=Task::find()->where(['promotion_id'=>0])
-        ->andWhere(['not in','status',[0,4,5]])->andWhere(['<','time',time()-$this->timeout])
-        ->andWhere(['not in','status',[0,1,4,5]])->andWhere(['>','time',1])
-        ->all();
+            ->andWhere(['in','status',[2]])->andWhere(['>','time',time()-$this->timeout])
+            ->andWhere(['in','account_id',$this->accounts])
+            ->all();
+        foreach ($tasks as $task){
+            $order_trading_pair=$task->currency_one.$task->currency_two;
+            foreach ($this->trading_pairs as $trading_pair){
+                if($trading_pair->trading_paid==$order_trading_pair){//найдем нашу пару
+                    //если цена сильно просела отменим
+                    if(1-($trading_pair->statistics->{'now'}->bid/$task->start_rate)>$this->strategy['stop_loss']){
+                    //if(true){
+                        //отменяем ордер
+                       $task->cancelOrder();
+                       Log::log(['отмкна ордера из-за опсасности ID '.$task->id." ".$task->time]);
+                        //$task->status=6; //новый статус отменено потому что опасно
+                        //$task->save();
+                        //если это был ордер на продажу выйти изэтой позиции
+                        if($task->sell==1){
+                            $sell_task=new Task();
+                            $sell_task->account_id = $task->account_id;
+                            $sell_task->promotion_id=0;
+                            $sell_task->status=0;
+                            $sell_task->sell=1;
+                            $sell_task->currency_one=$task->currency_one;
+                            $sell_task->currency_two=$task->currency_two;
+
+                            $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;
+                            $sell_task->rate=$trading_pair->statistics->{'now'}->bid*0.9;
+
+                            $sell_task->tokens_count=$task->tokens_count;
+                            $sell_task->random_curve=0;
+                            $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
+                            $sell_task->progress=0;
+                            $sell_task->time=time();
+
+                            $sell_task->save();
+
+                            $sell_task->make2(
+                                Currency::find()->where(['symbol'=>$sell_task->currency_one])->limit(1)->one()->id,
+                                Currency::find()->where(['symbol'=>$sell_task->currency_two])->limit(1)->one()->id);
+                        }
+
+                    }
+                    //отмена из-за спада
+
+                    echo "recent price-->".self::findThreshold($this->strategy['on_going_drop'],$trading_pair->statistics);
+                    if($task->start_rate*($this->strategy['stop_loss']>1?$this->strategy['stop_loss']:$this->strategy['stop_loss']+1)>$trading_pair->statistics->{'now'}->bid
+                        && self::findThreshold($this->strategy['on_going_drop'],$trading_pair->statistics)){
+                        //if(true){
+                        //отменяем ордер
+                        $task->cancelOrder();
+                        Log::log(['отмкна ордера из-за спада ID '.$task->id." ".$task->time]);
+                        //$task->status=6; //новый статус отменено потому что опасно
+                        //$task->save();
+                        //если это был ордер на продажу выйти изэтой позиции
+                        if($task->sell==1){
+                            $sell_task=new Task();
+                            $sell_task->account_id = $task->account_id;
+                            $sell_task->promotion_id=0;
+                            $sell_task->status=0;
+                            $sell_task->sell=1;
+                            $sell_task->currency_one=$task->currency_one;
+                            $sell_task->currency_two=$task->currency_two;
+
+                            $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;
+                            $sell_task->rate=$trading_pair->statistics->{'now'}->bid*0.9;
+
+                            $sell_task->tokens_count=$task->tokens_count;
+                            $sell_task->random_curve=0;
+                            $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
+                            $sell_task->progress=0;
+                            $sell_task->time=time();
+
+                            $sell_task->save();
+
+                            $sell_task->make2(
+                                Currency::find()->where(['symbol'=>$sell_task->currency_one])->limit(1)->one()->id,
+                                Currency::find()->where(['symbol'=>$sell_task->currency_two])->limit(1)->one()->id);
+                        }
+
+                    }
+                }
+            }
+        }
+
+    }
+
+
+    public function closeOutdated(){//добавить id  кампании
+        $entrance_usdt=ApiRequest::statistics('v1/trader2/info',['pair'=>$this->entrance_currency.'USDT']);
+        $entrance_usdt=$entrance_usdt->data;
+
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'includes'=>'BTC']);
+        $trading_pairs=$trading_pairs->data;
+
+        foreach ($trading_pairs as $trading_pair){
+            $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
+            $trading_pair->statistics=$tmp->data;
+        }
+
+        $this->trading_pairs=$trading_pairs;
+        $this->entrance_usdt=$entrance_usdt;
+
+
+        $tasks=Task::find()->where(['promotion_id'=>0])
+        ->andWhere(['not in','status',[0,1,4,5]])->andWhere(['<','time',time()-$this->timeout])
+        ->andWhere(['>','time',1])->andWhere(['in','account_id',$this->accounts])
+//        ->createCommand()->rawSql;
+//        echo $tasks; die();
+            ->all();
 
         foreach ($tasks as $task){
+            echo " ".$task->id;
             $task->cancelOrder();
+            $order_trading_pair=$task->currency_one.$task->currency_two;
+            foreach ($this->trading_pairs as $trading_pair) {
+                if ($trading_pair->trading_paid == $order_trading_pair) {//найдем нашу пару
+                    //если это был ордер на продажу выйти изэтой позиции
+                    if($task->sell==1){
+                        $sell_task=new Task();
+                        $sell_task->account_id = $task->account_id;
+                        $sell_task->promotion_id=0;
+                        $sell_task->status=0;
+                        $sell_task->sell=1;
+                        $sell_task->currency_one=$task->currency_one;
+                        $sell_task->currency_two=$task->currency_two;
+
+                        $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;
+                        $sell_task->rate=$trading_pair->statistics->{'now'}->bid*0.9;
+
+                        $sell_task->tokens_count=$task->tokens_count;
+                        $sell_task->random_curve=0;
+                        $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
+                        $sell_task->progress=0;
+                        $sell_task->time=time();
+
+                        $sell_task->save();
+
+                        $sell_task->make2(
+                            Currency::find()->where(['symbol'=>$sell_task->currency_one])->limit(1)->one()->id,
+                            Currency::find()->where(['symbol'=>$sell_task->currency_two])->limit(1)->one()->id);
+                    }
+                }
+            }
         }
 
         $this->getBalance();
@@ -248,7 +397,9 @@ class Campaign extends \yii\db\ActiveRecord
 
         $this->trading_pairs=$trading_pairs;
         $this->entrance_usdt=$entrance_usdt;
-
+        //return;
+        $this->check();
+        //return;
         $this->trade();
     }
     public function getBalance(){
@@ -430,9 +581,7 @@ class Campaign extends \yii\db\ActiveRecord
         $this->getBalance();
     }
 
-    public function check($stat){
-        $executor=new Campaign();
-    }
+
     public function getTriggerScore($symbol){
         $trigger_score=0;
         foreach ($this->settings as $key=>$strategy){
@@ -497,6 +646,31 @@ class Campaign extends \yii\db\ActiveRecord
             }
         }
         return 0;
+
+    }
+
+    //вернет TRUE   если курс изменился в низ на заданный процент, иначе FALSE
+    public static function findThreshold($percent_drop,$statistics){
+        $bid240=$statistics->{'240min'}->bid;
+        $bid120=$statistics->{'120min'}->bid;
+        $bid60=$statistics->{'60min'}->bid;
+        $bid40=$statistics->{'40min'}->bid;
+        $bid30=$statistics->{'30min'}->bid;
+        $bid20=$statistics->{'20min'}->bid;
+        $bid15=$statistics->{'15min'}->bid;
+        $bid10=$statistics->{'10min'}->bid;
+        $bid5=$statistics->{'5min'}->bid;
+        $bid_now=$statistics->{'now'}->bid;
+
+        $sequence=[$bid5,$bid10,$bid15,$bid20,$bid30,$bid40,$bid60,$bid120,$bid240];
+        $count_sequence=count($sequence);
+        for ($i=0;$i<$count_sequence;$i++){
+            $time1=$sequence[$i];//всегда должна быть меньше чем время t2
+            //echo "(".number_format(1-($bid_now/$time1),2).")";
+            if(1-($bid_now/$time1)>$percent_drop)
+                return true;
+        }
+        return false;
 
     }
     private function weNeedToPlaceBuyOrder($account,$random_per,$local_symbol,$exchange_price){

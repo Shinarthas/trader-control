@@ -14,8 +14,10 @@ use yii\helpers\ArrayHelper;
  * @property int $account_id
  * @property int $status
  * @property int $sell
+ * @property int $group_id
  * @property int $value
  * @property double $random_curve
+ * @property double $start_rate
  * @property string $tokens_count
  * @property string $rate
  * @property int $progress
@@ -73,8 +75,8 @@ class Task extends \yii\db\ActiveRecord
     {
         return [
             [['promotion_id',  'value', 'random_curve', 'time'], 'required'],
-            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
-            [['random_curve', 'tokens_count','value',  'rate'], 'number'],
+            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'progress', 'time', 'created_at', 'loaded_at', 'group_id'], 'integer'],
+            [['random_curve', 'tokens_count','value',  'rate', 'start_rate'], 'number'],
             [['data_json'], 'string'],
         ];
     }
@@ -99,6 +101,8 @@ class Task extends \yii\db\ActiveRecord
             'time' => 'Time',
             'created_at' => 'Created At',
             'loaded_at' => 'Loaded At',
+            'start_rate' => 'Start rate',
+            'group_id' => 'Group id',
         ];
     }
 
@@ -243,7 +247,7 @@ class Task extends \yii\db\ActiveRecord
                 'rate' => $this->rate,
                 'use_paid_proxy' => 0,
             ]);
-            //print_r($result);
+            print_r($result);
 //            die();
 
         }

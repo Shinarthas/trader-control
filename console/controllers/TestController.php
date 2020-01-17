@@ -116,4 +116,9 @@ class TestController extends Controller
         $campaign->closeOutdated();
     }
 
+    public function actionMake2(){
+        $task=Task::findOne(19578);
+        $task->make2(5,6);
+    }
+
 }

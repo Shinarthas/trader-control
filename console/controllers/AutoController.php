@@ -201,4 +201,11 @@ class AutoController extends Controller
         if(!$order->save())
             print_r($order->errors);
     }
+    public function actionCampaignCloseOutdated(){
+	    $campaigns=Campaign::find()->all();
+	    foreach ($campaigns as $campaign){
+            $campaign->closeOutdated();
+        }
+
+    }
 }

@@ -6,7 +6,9 @@
     * * * * * php /var/www/[dir_name]/yii auto/
     0 * * * * php /var/www/[dir_name]/yii auto/create-hour-tasks
     * * * * * php /var/www/[dir_name]/yii auto/possibility-task
-    * * * * * php /var/www/[dir_name]/yii auto/trader2
+
+    * * * * * php /var/www/[dir_name]/yii auto/trader2new
+    0 * * * * php /var/www/[dir_name]/yii auto/campaign-close-outdated
 
 ## Немного о проекте
 
