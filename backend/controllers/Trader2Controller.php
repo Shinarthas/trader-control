@@ -40,69 +40,62 @@ class Trader2Controller extends Controller
 	    $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'limit'=>10]);
         $trading_pairs=$trading_pairs->data;
         $period=Trading::getPeriod();
-        $balances=DemoBalance::find()->limit(1000)->where(['period'=>$period])->orderBy('id desc')
-            //->createCommand()->rawSql;
-            ->all();
-        //print_r($balances);
 
-        $orders=DemoTask::find()->orderBy('id desc')->limit(50)->all();
+        $orders=Task::find()->orderBy('id desc')->limit(100)->all();
 
         foreach ($trading_pairs as $trading_pair){
             $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
             $trading_pair->statistics=$tmp;
         }
+
         $trading_pairs_remapped=[];
         foreach ($trading_pairs as $trading_pair){
             $trading_pairs_remapped[$trading_pair->trading_paid]=$trading_pair;
         }
-        $top_currencies=[];
-        $tc=CoinMarketCapApi::top();
-        $tmp_rating=[];
-        foreach ($tc->data as $key=>$cmc_currency){
-            $tmp_rating[]=['key'=>$key,'rating'=>$cmc_currency->quote->USD->volume_24h*0.1*($cmc_currency->quote->USD->percent_change_1h)];
-        }
-        usort($tmp_rating, function($a, $b) {
-            return ($a['rating'] <=> $b['rating']);
-        });
-        //print_r($tmp_rating);
-        for($i=0;$i<6;$i++){
-            $top_currencies[$i]=$tc->data[$tmp_rating[count($tmp_rating)-1-$i]['key']];
-        }
-
-        $markets=Market::find()->all();
+//        $top_currencies=[];
+//        $tc=CoinMarketCapApi::top();
+//        $tmp_rating=[];
+//        foreach ($tc->data as $key=>$cmc_currency){
+//            $tmp_rating[]=['key'=>$key,'rating'=>$cmc_currency->quote->USD->volume_24h*0.1*($cmc_currency->quote->USD->percent_change_1h)];
+//        }
+//        usort($tmp_rating, function($a, $b) {
+//            return ($a['rating'] <=> $b['rating']);
+//        });
+//
+//        //print_r($tmp_rating);
+//        for($i=0;$i<6;$i++){
+//            $top_currencies[$i]=$tc->data[$tmp_rating[count($tmp_rating)-1-$i]['key']];
+//        }
+//
+//        $markets=Market::find()->all();
 
 	   $Companies=Campaign::find()->all();
-
-
         return $this->render("index", [
             'companies' => $Companies,
             'trading_pairs'=>$trading_pairs,
             'orders'=>$orders,
             'period'=>$period,
-            'balances'=>$balances,
             'trading_pairs_remapped'=>$trading_pairs_remapped,
-            'top_currencies'=>$top_currencies,
-            'markets'=>$markets
         ]);
     }
 
-    public function actionIndex2(){
+    public function actionOrders($id){
 	    $get=Yii::$app->request->get();
 	    if(isset($get['date_start']))
-	        $date_start=$get['date_start'];
+	        $date_start=date('Y-m-d',strtotime($get['date_start']));
 	    else
-	        $date_start='2019-01-01';
+	        $date_start=date('Y-m-d',time());
 
         $trading_pairs=ApiRequest::statistics('v1/trader2/list',[]);
         $trading_pairs=$trading_pairs->data;
 
-        $balances=DemoBalance::find()->limit(30)->orderBy('id desc')->all();
 
-        $orders=DemoTask::find()
-            ->where(['>=','time',strtotime($date_start)+2*3600])->andWhere(['<','time',strtotime($date_start)+24*3600+2*3600])
+        $orders=Task::find()
+            //->where(['>=','time',strtotime($date_start)+2*3600])->andWhere(['<','time',strtotime($date_start)+24*3600+2*3600])
+            ->andWhere(['<>','status',1])
             ->orderBy([
-            'time' => SORT_ASC,
-            'id'=>SORT_ASC
+            'time' => SORT_DESC,
+            'id'=>SORT_DESC
         ])->limit(400)
             //->createCommand()->rawSql;
             ->all();
@@ -120,12 +113,11 @@ class Trader2Controller extends Controller
         $Companies=Campaign::find()->all();
 
 
-        return $this->render("index2", [
+        return $this->render("orders", [
             'date_start' => $date_start,
             'companies' => $Companies,
             'trading_pairs'=>$trading_pairs,
             'orders'=>$orders,
-            'balances'=>$balances,
             'trading_pairs_remapped'=>$trading_pairs_remapped
         ]);
     }
@@ -517,4 +509,32 @@ class Trader2Controller extends Controller
 
 
      }
+
+     public function actionUsdtWithAll($id){
+	    //отменим все ордер
+         $tasks=Task::find()->where(['campaign_id'=>$id])->all();
+         foreach ($tasks as $task){
+             $task->cancelOrder();
+         }
+	    $campaign=Campaign::findOne($id);
+
+         $campaign->getUsdtWithAll();
+     }
+
+    public function actionUsdtWithEntrance($id){
+        //отменим все ордер
+        $tasks=Task::find()->where(['campaign_id'=>$id,'sell'=>0])->all();
+        foreach ($tasks as $task){
+            $task->cancelOrder();
+        }
+        $campaign=Campaign::findOne($id);
+
+        $campaign->getUsdtWithEntrance();
+    }
+
+    public function actionEntranceWithUsdt($id){
+        $campaign=Campaign::findOne($id);
+
+        $campaign->getEntranceWithUsdt();
+    }
 }

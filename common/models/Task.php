@@ -14,7 +14,8 @@ use yii\helpers\ArrayHelper;
  * @property int $account_id
  * @property int $status
  * @property int $sell
- * @property int $group_id
+ * @property int $campaign_id
+
  * @property int $value
  * @property double $random_curve
  * @property double $start_rate
@@ -75,7 +76,7 @@ class Task extends \yii\db\ActiveRecord
     {
         return [
             [['promotion_id',  'value', 'random_curve', 'time'], 'required'],
-            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'progress', 'time', 'created_at', 'loaded_at', 'group_id'], 'integer'],
+            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
             [['random_curve', 'tokens_count','value',  'rate', 'start_rate'], 'number'],
             [['data_json'], 'string'],
         ];
@@ -102,7 +103,6 @@ class Task extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
             'loaded_at' => 'Loaded At',
             'start_rate' => 'Start rate',
-            'group_id' => 'Group id',
         ];
     }
 
@@ -247,7 +247,7 @@ class Task extends \yii\db\ActiveRecord
                 'rate' => $this->rate,
                 'use_paid_proxy' => 0,
             ]);
-            print_r($result);
+            //print_r($result);
 //            die();
 
         }
@@ -501,7 +501,6 @@ class Task extends \yii\db\ActiveRecord
 	public function cancelOrder() {
         //$res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => $this->promotion->is_paid_proxy, ]);
         $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => 0, ]);
-        print_r([ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => 0, ]);
         if($res->status){
             echo 'canceled';
             $this->status=Task::STATUS_CANCELED;

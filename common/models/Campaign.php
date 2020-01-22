@@ -68,7 +68,6 @@ class Campaign extends \yii\db\ActiveRecord
     private function trade(){
         if(empty($this->balances))
             $this->getBalance();
-
         //сколько у нас той валюты через которую хотим заходить
         $entrance_value=0;
 
@@ -106,6 +105,7 @@ class Campaign extends \yii\db\ActiveRecord
                         }
 
                         $buy_task=new Task();
+                        $buy_task->campaign_id = $this->id;
                         $buy_task->account_id = $account;
                         $buy_task->promotion_id=0;
                         $buy_task->status=0;
@@ -166,6 +166,7 @@ class Campaign extends \yii\db\ActiveRecord
 
                     foreach ($this->accounts as $account){
                         $sell_task=new Task();
+                        $sell_task->campaign_id = $this->id;
                         $sell_task->account_id = $account;
                         $sell_task->promotion_id=0;
                         $sell_task->status=0;
@@ -173,7 +174,7 @@ class Campaign extends \yii\db\ActiveRecord
                         $sell_task->currency_one=$local_symbol;
                         $sell_task->currency_two=$this->entrance_currency;
                         $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;//тут коеф профита
-                        $sell_task->rate=$trading_pair->statistics->{'now'}->ask*($this->strategy['profit']>1?$this->strategy['profit']:$this->strategy['profit']+1);//тут коеф профита
+                        $sell_task->rate=$trading_pair->statistics->{'now'}->bid*($this->strategy['profit']>1?$this->strategy['profit']:$this->strategy['profit']+1);//тут коеф профита
                         $tokens_count=0.01;
                         foreach ($this->balances[$account]->balances as $balance){
                             if($balance->name==$local_symbol){
@@ -252,6 +253,7 @@ class Campaign extends \yii\db\ActiveRecord
                         //если это был ордер на продажу выйти изэтой позиции
                         if($task->sell==1){
                             $sell_task=new Task();
+                            $sell_task->campaign_id = $this->id;
                             $sell_task->account_id = $task->account_id;
                             $sell_task->promotion_id=0;
                             $sell_task->status=0;
@@ -260,7 +262,7 @@ class Campaign extends \yii\db\ActiveRecord
                             $sell_task->currency_two=$task->currency_two;
 
                             $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;
-                            $sell_task->rate=$trading_pair->statistics->{'now'}->bid*0.9;
+                            $sell_task->rate=$trading_pair->statistics->{'now'}->bid*0.9;///что-б точно закрыть
 
                             $sell_task->tokens_count=$task->tokens_count;
                             $sell_task->random_curve=0;
@@ -279,17 +281,18 @@ class Campaign extends \yii\db\ActiveRecord
                     //отмена из-за спада
 
                     echo "recent price-->".self::findThreshold($this->strategy['on_going_drop'],$trading_pair->statistics);
-                    if($task->start_rate*($this->strategy['stop_loss']>1?$this->strategy['stop_loss']:$this->strategy['stop_loss']+1)>$trading_pair->statistics->{'now'}->bid
+                    if($task->start_rate*($this->strategy['safe_area']>1?$this->strategy['safe_area']:$this->strategy['safe_area']+1)>$trading_pair->statistics->{'now'}->bid
                         && self::findThreshold($this->strategy['on_going_drop'],$trading_pair->statistics)){
                         //if(true){
                         //отменяем ордер
                         $task->cancelOrder();
-                        Log::log(['отмкна ордера из-за спада ID '.$task->id." ".$task->time]);
+                        Log::log(['отмкна ордера из-за спада ID '.$task->id." ".$task->time." "]);
                         //$task->status=6; //новый статус отменено потому что опасно
                         //$task->save();
                         //если это был ордер на продажу выйти изэтой позиции
                         if($task->sell==1){
                             $sell_task=new Task();
+                            $sell_task->campaign_id = $this->id;
                             $sell_task->account_id = $task->account_id;
                             $sell_task->promotion_id=0;
                             $sell_task->status=0;
@@ -298,7 +301,7 @@ class Campaign extends \yii\db\ActiveRecord
                             $sell_task->currency_two=$task->currency_two;
 
                             $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;
-                            $sell_task->rate=$trading_pair->statistics->{'now'}->bid*0.9;
+                            $sell_task->rate=$trading_pair->statistics->{'now'}->ask*0.9;// чтоб точно продать
 
                             $sell_task->tokens_count=$task->tokens_count;
                             $sell_task->random_curve=0;
@@ -346,6 +349,8 @@ class Campaign extends \yii\db\ActiveRecord
 
         foreach ($tasks as $task){
             echo " ".$task->id;
+            Log::log(['отмкна ордера из-за таймаута ID '.$task->id." ".$task->time]);
+
             $task->cancelOrder();
             $order_trading_pair=$task->currency_one.$task->currency_two;
             foreach ($this->trading_pairs as $trading_pair) {
@@ -353,6 +358,7 @@ class Campaign extends \yii\db\ActiveRecord
                     //если это был ордер на продажу выйти изэтой позиции
                     if($task->sell==1){
                         $sell_task=new Task();
+                        $sell_task->campaign_id = $this->id;
                         $sell_task->account_id = $task->account_id;
                         $sell_task->promotion_id=0;
                         $sell_task->status=0;
@@ -361,7 +367,7 @@ class Campaign extends \yii\db\ActiveRecord
                         $sell_task->currency_two=$task->currency_two;
 
                         $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;
-                        $sell_task->rate=$trading_pair->statistics->{'now'}->bid*0.9;
+                        $sell_task->rate=$trading_pair->statistics->{'now'}->ask*0.9;
 
                         $sell_task->tokens_count=$task->tokens_count;
                         $sell_task->random_curve=0;
@@ -414,7 +420,18 @@ class Campaign extends \yii\db\ActiveRecord
         $this->balances=$balances;
         return $balances;
     }
-
+    public function getBalanceDate($timestamp){
+        $balances=[];
+        $accounts=$this->accounts;
+        $this->current_usdt_volume=0;
+        foreach ($accounts as $account){
+            $tmp= ApiRequest::statistics('v1/account/get-balance-time', ['id'=>$account,'timestamp'=>$timestamp]);
+            $balances[$account]=$tmp->data;
+            $this->current_usdt_volume+=$tmp->data->in_usd;
+        }
+        $this->balances=$balances;
+        return $balances;
+    }
 
     //тут наверное надо будет сделать процент
     public function getEntranceWithUsdt($save=0){
@@ -442,6 +459,7 @@ class Campaign extends \yii\db\ActiveRecord
 
 
                     $buy_task=new Task();
+                    $buy_task->campaign_id = $this->id;
                     $buy_task->account_id = $account_id;
                     $buy_task->promotion_id=0;
                     $buy_task->status=0;
@@ -487,6 +505,7 @@ class Campaign extends \yii\db\ActiveRecord
                     }
 
                     $sell_task=new Task();
+                    $sell_task->campaign_id = $this->id;
                     $sell_task->account_id = $account_id;
                     $sell_task->promotion_id=0;
                     $sell_task->status=0;
@@ -550,11 +569,12 @@ class Campaign extends \yii\db\ActiveRecord
                 }
 
                 $sell_task=new Task();
+                $sell_task->campaign_id = $this->id;
                 $sell_task->account_id = $account_id;
                 $sell_task->promotion_id=0;
                 $sell_task->status=0;
                 $sell_task->sell=1;
-                $sell_task->rate=$trading_pair->statistics->{'now'}->ask*1.05;//чтоб точно купить
+                $sell_task->rate=$trading_pair->statistics->{'now'}->ask*0.9;//чтоб точно купить
                 $sell_task->tokens_count=$balance->value*0.98;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
                 $sell_task->random_curve=0;
                 $sell_task->value=($sell_task->tokens_count*$sell_task->rate);

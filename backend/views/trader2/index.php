@@ -73,7 +73,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                             <p class="symbol">
                                 <?= $pair->trading_paid; ?> :
                                 <span class="rating"><?php echo number_format($rating,3)?></span>
-                                <span class="depth-possibility"><?= \backend\assets\DepthAnalizer::getPossibility(str_replace('BTC','',$pair->trading_paid));?></span>
+                                <span class="depth-possibility">1</span>
                             </p>
                             <div class="chart" style="min-height: 100px">
 
@@ -81,6 +81,41 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                         </div>
                     </div>
                 </div>
+            <?php } ?>
+        </div>
+    </div>
+    <div style="" class="col-md-6">
+        <div class="row">
+            <?php foreach ($companies as $company){?>
+                <div class="col-xs-12">
+                    <a class="btn btn btn-default" href="/trader2/<?= $company->id ?>/edit"><?= $company->name ?> </a>
+                    <a href="/trader2/<?=$company->id?>/orders">посмотреть ордера</a>
+                    <p>Баланс:
+                        <?php $balances=$company->getBalance(); ?>
+                        <?php $total_usdt=0; ?>
+                        <?php foreach ($balances as $account=>$bb){?>
+                            <?php $total_usdt+=$bb->in_usd?>
+
+                        <?php } ?>
+                        <span style="color: lime">$<?= number_format($total_usdt,2) ?></span>
+                    </p>
+                    <p>баланс в начале дня
+                    <?php $balances2=$company->getBalanceDate(strtotime(date('Y-m-d  00:00:00',time()))); ?>
+                        <?php $total_usdt2=0; ?>
+                        <?php foreach ($balances2 as $account=>$bb){?>
+                        <?php $total_usdt2+=$bb->in_usd?>
+
+                        <?php } ?>
+                        <span style="color: lime">$<?= number_format($total_usdt2,2) ?></span>
+
+                    </p>
+                    <p>
+                        <a class="btn btn-danger" target="_blank" href="/trader2/<?= $company->id ?>/usdt-with-all">Отменить все и перейти в USDT</a>
+                        <a class="btn btn-danger" target="_blank" href="/trader2/<?= $company->id ?>/usdt-with-entrance">перейти в USDT с входной валютой</a>
+                        <a class="btn btn-danger" target="_blank" href="/trader2/<?= $company->id ?>/entrance-with-usdt">Закупится основной валютой</a>
+                    </p>
+                </div>
+
             <?php } ?>
         </div>
     </div>
@@ -145,6 +180,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 
         </div>
     </div>
+
 </div>
 
 <div class="row" >
@@ -241,30 +277,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
     }
 
 
-    setInterval(updateAndSort,5000)
-    function updateAndSort() {
-        $('.currency_wrapper .currency').each(function( index ) {
-            var rating=parseFloat($(this).find('.rating').text())
-            var random=generateRandomNumber(-0.1,0.1);
-            $(this).find('.rating').text((rating+random).toFixed(3))
-        });
-        // $('.currency_wrapper .currency').sort(function(a,b) {
-        //     return parseFloat($(a).find('.rating').text()) > parseFloat($(b).find('.rating').text());
-        // }).appendTo('.currency_wrapper');
 
-
-        $('.currency_wrapper .currency').sort(function(a, b) {
-            return +$(a).find('.rating').text() - +$(b).find('.rating').text();
-        })
-            .each(function() {
-                $('.currency_wrapper').append(this);
-            });
-    }
-    function generateRandomNumber(min,max) {
-            highlightedNumber = Math.random() * (max - min) + min;
-
-            return highlightedNumber;
-    };
     function refresh() {
 
             window.location.reload(true);

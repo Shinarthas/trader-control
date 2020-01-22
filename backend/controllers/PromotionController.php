@@ -2,6 +2,7 @@
 namespace backend\controllers;
 
 use common\components\ApiRequest;
+use common\models\Currency;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\Controller;
@@ -227,4 +228,52 @@ class PromotionController extends Controller
 		}
 		return $this->render("view", ['promotion' => $promotion]);
 	}
+
+	public function actionCancel(){
+	    $get=Yii::$app->request->get();
+
+	    $id=$get['id'];
+
+	    $task=Task::findOne($id);
+        $task->cancelOrder();
+
+        if($task->sell==1){
+            $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'includes'=>'BTC']);
+            $trading_pairs=$trading_pairs->data;
+
+            foreach ($trading_pairs as $trading_pair){
+                $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
+                $trading_pair->statistics=$tmp->data;
+            }
+
+            $order_trading_pair=$task->currency_one.$task->currency_two;
+            foreach ($trading_pairs as $trading_pair) {
+                if ($trading_pair->trading_paid == $order_trading_pair) {//найдем нашу пару
+                    $sell_task=new Task();
+                    $sell_task->account_id = $task->account_id;
+                    $sell_task->promotion_id=0;
+                    $sell_task->status=0;
+                    $sell_task->sell=1;
+                    $sell_task->currency_one=$task->currency_one;
+                    $sell_task->currency_two=$task->currency_two;
+
+                    $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;
+                    $sell_task->rate=$trading_pair->statistics->{'now'}->ask*0.9;
+
+                    $sell_task->tokens_count=$task->tokens_count;
+                    $sell_task->random_curve=0;
+                    $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
+                    $sell_task->progress=0;
+                    $sell_task->time=time();
+
+                    $sell_task->save();
+
+                    $sell_task->make2(
+                        Currency::find()->where(['symbol'=>$sell_task->currency_one])->limit(1)->one()->id,
+                        Currency::find()->where(['symbol'=>$sell_task->currency_two])->limit(1)->one()->id);
+                }
+            }
+
+        }
+    }
 }

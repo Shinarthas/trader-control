@@ -34,32 +34,34 @@ function getPeriod($date){
 <div class="row">
     <div class="col-md-11">
         <h3>History:</h3>
-        <table class="table">
+        <table>
             <thead>
             <tr>
                 <th>id</th>
+                <th>direction</th>
+                <th>acc</th>
                 <th>date</th>
-                <th>Currency</th>
+                <th>Currency one
+                <th>Currency two</th>
+                <th>tokens_count</th>
+                <th>rate start</th>
                 <th>rate</th>
-                <th>tokens</th>
                 <th>status</th>
-                <th>profit</th>
-                <th>period</th>
+                <th>action</th>
             </tr>
             </thead>
             <tbody>
-
-            <?
-            $total_profit=0;
-            for($i=0;$i<count($orders);$i++): ?>
-                <? $t=$orders[$i]; ?>
-                <?php if($t->sell==1) continue; ?>
+            <? foreach($orders as $t): ?>
                 <tr>
                     <td><?=$t->id;?></td>
-                    <td><?=date("Y-m-d H:i:s", $t->time-2*3600);?></td>
+                    <td><?=($t->sell==1)?'<b style="color:orange">sell</b>':'<b style="color:purple;">buy</b>';?></td>
+                    <td><?=$t->account_id;?></td>
+                    <td><?=date("d/m/y H:i", $t->time);?></td>
                     <td><?=$t->currency_one;?></td>
-                    <td><?php if($orders[$i+1]->sell==1 && $orders[$i+1]->currency_one==$t->currency_one) {echo $orders[$i]->rate.'->';}?><?=$orders[$i+1]->rate;?></td>
+                    <td><?=$t->currency_two;?></td>
                     <td><?=$t->tokens_count;?></td>
+                    <td><?=$t->start_rate;?></td>
+                    <td><?=$t->rate;?></td>
                     <td><? if($t->status==1){echo "<b style='color:red'>error</b>";} else if($t->status==2){echo "OK";
                             if($t->progress != 100) {
                                 echo '<b style="color:red"> ('.$t->progress.'%)</b>';
@@ -67,30 +69,19 @@ function getPeriod($date){
                         }else if($t->status==3){
                             echo "price error";
                         } else {
-                            echo $t::$statuses[$t->status];
+                            echo '<span class="'.$t::$statuses[$t->status].'">'.$t::$statuses[$t->status].'</span>';
                         }
 
                         ?></td>
                     <td>
-                        <?php if($orders[$i+1]->sell==1 && $orders[$i+1]->currency_one==$t->currency_one){
-
-                            $money_was=$orders[$i]->rate*$orders[$i]->tokens_count;
-                            $money_now=$orders[$i+1]->rate*$orders[$i]->tokens_count;
-                            //echo "(".$money_was." -,- ".$money_now.")";
-                            //if($t->status==\common\models\DemoTask::STATUS_CREATED)
-                            //print_r($trading_pairs_remapped[$t->currency_one.$t->currency_two]->statistics->data->now->bid);
-                            //$money_now=$trading_pairs_remapped[$t->currency_one.$t->currency_two]->statistics->data->now->bid*$orders[$i+1]->tokens_count;
-//                            if($t->status==\common\models\DemoTask::STATUS_COMPLETED)
-//                                $money_now=$t->rate+$orders[$i+1]->tokens_count;
-                            $total_profit+=$perccent;
-                            $perccent=($money_now-$money_was)/$money_now*100;
-                            echo  number_format($perccent,2).'%';
-                        }?>
+                        <?php if($t->status==2){ ?>
+                            <a target="_blank" href="/promotion/cancel?id=<?=$t->id?>">cancel</a>
+                        <?php } ?>
                     </td>
-                   <td><?php echo getPeriod($t->time-2*3600)?></td>
+
                 </tr>
 
-            <? endfor; ?>
+            <? endforeach; ?>
             <tbody>
         </table>
         <pre>
@@ -116,17 +107,38 @@ function getPeriod($date){
 
 </div>
 <style>
-    .symbol{
-        color: black;
-        font-size: 24px;
-        font-weight: bold;
+
+    table tr>* {
+        padding: 5px;
+        border-bottom: 1px solid #888;
     }
-    .rating{
-        color: black;
-        font-size: 12px;
+</style>
+<style>
+    table tr>* {
+        border:1px solid #eee;
+        padding:3px 10px;
+        min-width:75px;
+        text-align:center;
     }
-    .menu{
-        opacity: 0;
+    .listtopie-link {
+        font-size:16px;
+        margin: 3px 10px;
+    }
+    h4 {
+        margin-bottom:20px;
+        font-size:20px;
+    }
+    td.red {
+        color:red;
+    }
+    td.green {
+        color:#00d400;
+    }
+    .canceled{
+        color: orange;
+    }
+    .completed{
+        color: lime;
     }
 </style>
 <script>
