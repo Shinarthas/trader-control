@@ -247,7 +247,7 @@ class Task extends \yii\db\ActiveRecord
                 'rate' => $this->rate,
                 'use_paid_proxy' => 0,
             ]);
-            //print_r($result);
+            print_r($result);
 //            die();
 
         }

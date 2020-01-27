@@ -7,6 +7,7 @@ use common\assets\Hitbtc\Model\Order;
 use common\components\ApiRequest;
 use common\models\Campaign;
 use common\models\Company;
+use common\models\Currency;
 use common\models\DemoBalance;
 use common\models\DemoTask;
 use common\models\Market;
@@ -93,6 +94,7 @@ class Trader2Controller extends Controller
         $orders=Task::find()
             //->where(['>=','time',strtotime($date_start)+2*3600])->andWhere(['<','time',strtotime($date_start)+24*3600+2*3600])
             ->andWhere(['<>','status',1])
+            ->andWhere(['campaign_id'=>$id])
             ->orderBy([
             'time' => SORT_DESC,
             'id'=>SORT_DESC
@@ -110,15 +112,22 @@ class Trader2Controller extends Controller
         }
 
 
-        $Companies=Campaign::find()->all();
+        $Companies=Campaign::find()->where(['id'=>$id])->one();
+
+        $statistics=[];
+        $date=time();
+        for($i=$date-7*24*3600;$i<$date;$i+=12*3600){
+            $statistics['balances'][]=$Companies->getBalanceDate($i);
+        }
 
 
         return $this->render("orders", [
             'date_start' => $date_start,
-            'companies' => $Companies,
+            'campaign' => $Companies,
             'trading_pairs'=>$trading_pairs,
             'orders'=>$orders,
-            'trading_pairs_remapped'=>$trading_pairs_remapped
+            'trading_pairs_remapped'=>$trading_pairs_remapped,
+            'statistics'=>$statistics
         ]);
     }
 
@@ -176,7 +185,8 @@ class Trader2Controller extends Controller
             print_r($res);
         }
 
-        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['limit'=>1000]);
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['limit'=>100]);
+        //print_r(ArrayHelper::toArray($trading_pairs));
         $trading_pairs=$trading_pairs->data;
 
 
@@ -512,7 +522,7 @@ class Trader2Controller extends Controller
 
      public function actionUsdtWithAll($id){
 	    //отменим все ордер
-         $tasks=Task::find()->where(['campaign_id'=>$id])->all();
+         $tasks=Task::find()->where(['campaign_id'=>$id])->andWhere(['not in','status',[1,4,5]])->all();
          foreach ($tasks as $task){
              $task->cancelOrder();
          }
@@ -523,7 +533,7 @@ class Trader2Controller extends Controller
 
     public function actionUsdtWithEntrance($id){
         //отменим все ордер
-        $tasks=Task::find()->where(['campaign_id'=>$id,'sell'=>0])->all();
+        $tasks=Task::find()->where(['campaign_id'=>$id,'sell'=>0])->andWhere(['not  in','status',[0,1,4,5]])->all();
         foreach ($tasks as $task){
             $task->cancelOrder();
         }
@@ -536,5 +546,18 @@ class Trader2Controller extends Controller
         $campaign=Campaign::findOne($id);
 
         $campaign->getEntranceWithUsdt();
+    }
+
+    public function actionManualOrder(){
+	    $post=Yii::$app->request->post();
+
+	    $campaign=Campaign::findOne($post['campaign_id']);
+
+	    $currency_one=Currency::find()->where(['symbol'=>$post['currency_one']])->limit(1)->one();
+	    $currency_two=Currency::find()->where(['symbol'=>$post['currency_two']])->limit(1)->one();
+
+        $trading_pair=ApiRequest::statistics('v1/trader2/info',['pair'=>$currency_one->symbol.$currency_two->symbol]);
+
+        $campaign->sellTask($currency_one,$currency_two,$trading_pair->data,$post['is_buy'],$post['percent']/100,$post['profit']/100);
     }
 }

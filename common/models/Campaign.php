@@ -4,6 +4,7 @@ namespace common\models;
 
 use backend\assets\DepthAnalizer;
 use common\components\ApiRequest;
+use phpDocumentor\Reflection\Types\Integer;
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -122,6 +123,7 @@ class Campaign extends \yii\db\ActiveRecord
                         $buy_task->value=($buy_task->tokens_count*$buy_task->rate);
                         $buy_task->progress=0;
                         $buy_task->time=time();
+
                         //если ставка меньше  $1.5, то не ставить ордер
                         if($buy_task->tokens_count*$buy_task->rate*$this->entrance_usdt->{'now'}->bid<1.5)
                             continue;
@@ -470,6 +472,8 @@ class Campaign extends \yii\db\ActiveRecord
                     $buy_task->value=($buy_task->tokens_count*$buy_task->rate);
                     $buy_task->progress=0;
                     $buy_task->time=time();
+                    $buy_task->currency_one=$currency_one->symbol;
+                    $buy_task->currency_two=$currency_two->symbol;
                     if($buy_task->tokens_count<0.001)
                         continue;
                     $buy_task->save();
@@ -516,6 +520,8 @@ class Campaign extends \yii\db\ActiveRecord
                     $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
                     $sell_task->progress=0;
                     $sell_task->time=time();
+                    $sell_task->currency_one=$currency_one->symbol;
+                    $sell_task->currency_two=$currency_two->symbol;
                     if($sell_task->tokens_count<0.001)
                         continue;
                     $sell_task->save();
@@ -580,6 +586,9 @@ class Campaign extends \yii\db\ActiveRecord
                 $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
                 $sell_task->progress=0;
                 $sell_task->time=time();
+                $sell_task->currency_one=$currency_one->symbol;
+                $sell_task->currency_two=$currency_two->symbol;
+                $sell_task->time=time();
 //                echo '---'.$currency_one->symbol.' '.$currency_two->symbol." ";
 //                print_r(ArrayHelper::toArray($sell_task));
 //
@@ -600,7 +609,81 @@ class Campaign extends \yii\db\ActiveRecord
 
         $this->getBalance();
     }
+    public  function sellTask(Currency $currency_one, Currency $currency_two,$trading_pair, $is_buy=false,$percent_bank,$take_profit=false){
+        $entrance_usdt=ApiRequest::statistics('v1/trader2/info',['pair'=>$this->entrance_currency.'USDT']);
+        $this->entrance_usdt=$entrance_usdt=$entrance_usdt->data;
+        if(empty($this->balances))
+            $balances=$this->getBalance();
 
+        if($is_buy)
+            echo 'true';
+        else
+            echo 'false';
+        if(!$take_profit)
+            $take_profit=$this->strategy['profit']>1?$this->strategy['profit']:$this->strategy['profit']+1;
+        //print_r($this->balances);
+        foreach ($this->balances as $account_id=>$balances) {
+
+            foreach ($balances->balances as $balance) {
+                if($balance->name!=$currency_one->symbol)
+                    continue;
+
+                $tokens_we_need=$balances->in_usd*$percent_bank/
+                    $trading_pair->{'now'}->bid/$this->entrance_usdt->{'now'}->bid;
+
+                if($is_buy &&  $balance->value<$tokens_we_need){
+                    $buy_task=new Task();
+                    $buy_task->campaign_id = $this->id;
+                    $buy_task->account_id = $account_id;
+                    $buy_task->promotion_id=0;
+                    $buy_task->status=0;
+                    $buy_task->sell=0;
+                    $buy_task->currency_one=$currency_one->symbol;
+                    $buy_task->currency_two=$currency_two->symbol;
+                    $buy_task->rate=$trading_pair->{'now'}->bid*1.005;//чтоб точно купить
+                    $buy_task->start_rate=$trading_pair->{'now'}->bid;//чтоб точно купить
+                    $buy_task->tokens_count=$tokens_we_need-$balance->value;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+                    $buy_task->random_curve=0;
+                    $buy_task->value=($buy_task->tokens_count*$buy_task->rate);
+                    $buy_task->progress=0;
+                    $buy_task->time=time();
+                    if($buy_task->tokens_count*$buy_task->rate*$this->entrance_usdt->{'now'}->bid<1.5)
+                        continue;
+                    $buy_task->save();
+                    $buy_task->make2($currency_one->id,$currency_two->id);
+                    $balance->value+=$buy_task->tokens_count;
+                    sleep(1);
+                }
+                $sell_task=new Task();
+                $sell_task->campaign_id = $this->id;
+                $sell_task->account_id = $account_id;
+                $sell_task->promotion_id=0;
+                $sell_task->status=0;
+                $sell_task->sell=1;
+                $sell_task->start_rate=$trading_pair->{'now'}->bid;//чтоб точно купить
+                $sell_task->rate=$trading_pair->{'now'}->ask*(1+$take_profit);//чтоб точно купить
+                $sell_task->tokens_count=$tokens_we_need*0.99;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+                $sell_task->random_curve=0;
+                $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
+                $sell_task->progress=0;
+                $sell_task->time=time();
+                $sell_task->currency_one=$currency_one->symbol;
+                $sell_task->currency_two=$currency_two->symbol;
+                $sell_task->time=time();
+
+                if($sell_task->tokens_count<0.000000001){
+                    $market=Market::findOne(Account::findOne($account_id)->type);
+                    echo "---------------$market->name  ".$currency_one->symbol." ".$currency_two->symbol." $sell_task->tokens_count low amt ------------";
+                    continue;
+                }
+
+                $sell_task->save();
+
+                $sell_task->make2($currency_one->id,$currency_two->id);
+            }
+        }
+
+    }
 
     public function getTriggerScore($symbol){
         $trigger_score=0;

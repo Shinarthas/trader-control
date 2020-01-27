@@ -87,7 +87,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
     <div style="" class="col-md-6">
         <div class="row">
             <?php foreach ($companies as $company){?>
-                <div class="col-xs-12">
+                <div class="col-xs-12 campaign">
                     <a class="btn btn btn-default" href="/trader2/<?= $company->id ?>/edit"><?= $company->name ?> </a>
                     <a href="/trader2/<?=$company->id?>/orders">посмотреть ордера</a>
                     <p>Баланс:
@@ -191,6 +191,12 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 
 </div>
 <style>
+    .campaign{
+        padding: 10px;
+        border: 1px solid white;
+        border-radius: 5px;
+        margin: 5px;
+    }
     .symbol{
         color: black;
         font-size: 24px;
@@ -280,7 +286,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 
     function refresh() {
 
-            window.location.reload(true);
+            //window.location.reload(true);
 
     }
 
