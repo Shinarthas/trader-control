@@ -52,13 +52,12 @@ class DemoProfit extends \yii\db\ActiveRecord
             $profit->value=$p;
             $profit->save();
 
-            Log::log(ArrayHelper::toArray($profit),'withdraw','profit');
+
         }else{
             $profit=new DemoProfit();
             $profit->value=$p;
             $profit->save();
 
-            Log::log(ArrayHelper::toArray($profit),'withdraw','losses');
         }
     }
 }

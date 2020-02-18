@@ -57,6 +57,48 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 </div>
 <div class="row" >
     <div style="" class="col-md-6">
+        <table style="    width: 100%;
+    margin-bottom: 17px;
+    border-radius: 3px;">
+            <tr>
+                <td>
+                    <span style="color: red"><?= $order_statistics['week']['failed']?></span>/
+                    <span style="color: orange"><?= $order_statistics['week']['canceled']?></span>/
+                    <span style="color: lightskyblue"><?= $order_statistics['week']['completed']?></span>/
+                    <span style="color: lightgreen"><?= $order_statistics['week']['open']?></span>/
+                    <span style="color: white"><?= $order_statistics['week']['total']?></span>
+                </td>
+                <td>
+                    <span style="color: red"><?= $order_statistics['day']['failed']?></span>/
+                    <span style="color: orange"><?= $order_statistics['day']['canceled']?></span>/
+                    <span style="color: lightskyblue"><?= $order_statistics['day']['completed']?></span>/
+                    <span style="color: lightgreen"><?= $order_statistics['day']['open']?></span>/
+                    <span style="color: white"><?= $order_statistics['day']['total']?></span>
+                </td>
+                <td>
+                    <span style="color: red"><?= $order_statistics['hour']['failed']?></span>/
+                    <span style="color: orange"><?= $order_statistics['hour']['canceled']?></span>/
+                    <span style="color: lightskyblue"><?= $order_statistics['hour']['completed']?></span>/
+                    <span style="color: lightgreen"><?= $order_statistics['hour']['open']?></span>/
+                    <span style="color: white"><?= $order_statistics['hour']['total']?></span>
+                </td>
+            </tr>
+            <tr>
+                <td>week</td>
+                <td>day</td>
+                <td>hour</td>
+            </tr>
+            <tr>
+                <td>30/45 <span style="color: #00a300">+6%</span></td>
+                <td>8/12 <span style="color: #00a300">+3.1%</span></td>
+                <td>2/3 <span style="color: #00a300">+0.8%</span></td>
+            </tr>
+            <tr>
+                <td>0.00046</td>
+                <td>0.00023</td>
+                <td>0.00004</td>
+            </tr>
+        </table>
         <div class="row currency_wrapper">
             <?php foreach ($trading_pairs as $pair){ ?>
                 <?php if($pair->statistics->data->{'5min'}->bid==0){continue;}?>
@@ -90,13 +132,45 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 <div class="col-xs-12 campaign">
                     <a class="btn btn btn-default" href="/trader2/<?= $company->id ?>/edit"><?= $company->name ?> </a>
                     <a href="/trader2/<?=$company->id?>/orders">посмотреть ордера</a>
-                    <p>Баланс:
-                        <?php $balances=$company->getBalance(); ?>
-                        <?php $total_usdt=0; ?>
+                    <?php $balances=$company->getBalance(); ?>
+
+                    <?php $total_usdt=0; ?>
+                    <div class="row" style="margin-top: 10px;">
                         <?php foreach ($balances as $account=>$bb){?>
+                            <div class="col-md-4">
+                                <div class="panel panel-default">
+                                    <?php $account=\common\models\Account::findOne($account); ?>
+                                    <div class="panel-heading"><?= $account['name']?></div>
+                                    <div class="panel-body">
+                                        <?php foreach($bb->balances as $b){ ?>
+                                            <?php if($b->name=='USDT'){ ?>
+                                                <p><img src="http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/32/Tether-USDT-icon.png"> <?= number_format($b->value,2) ?> (<?= number_format($b->value_in_orders,2) ?>)</p>
+                                            <?php } ?>
+                                            <?php if($b->name=='BTC'){ ?>
+                                                <p><img src="http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/32/Bitcoin-Plus-XBC-icon.png"><?= number_format($b->value,4) ?> (<?= number_format($b->value_in_orders,4) ?>)</p>
+                                            <?php } ?>
+                                        <?php } ?>
+
+                                    </div>
+                                    <div class="dropdown">
+                                        <div class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            more <i class="fa fa-caret-down"></i>
+                                        </div>
+                                        <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                            <?php foreach($bb->balances as $b){ ?>
+                                                    <p  class="dropdown-item" ><?=$b->name ?> <?= number_format($b->value,2) ?> (<?= number_format($b->value_in_orders,2) ?>)</p>
+                                            <?php } ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <?php $total_usdt+=$bb->in_usd?>
 
                         <?php } ?>
+                    </div>
+
+                    <p>Баланс:
+
                         <span style="color: lime">$<?= number_format($total_usdt,2) ?></span>
                     </p>
                     <p>баланс в начале дня
@@ -109,80 +183,52 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                         <span style="color: lime">$<?= number_format($total_usdt2,2) ?></span>
 
                     </p>
+                    <?php foreach  ( $company->accounts as $account){?>
+                        <?php $account=\common\models\Account::findOne($account); ?>
+                        <input type="checkbox" checked value="<?=$account->id?>"><span style="margin-right: 10px"><?=$account->name?></span>
+                    <?php } ?>
                     <p>
-                        <a class="btn btn-danger" target="_blank" href="/trader2/<?= $company->id ?>/usdt-with-all">Отменить все и перейти в USDT</a>
-                        <a class="btn btn-danger" target="_blank" href="/trader2/<?= $company->id ?>/usdt-with-entrance">перейти в USDT с входной валютой</a>
-                        <a class="btn btn-danger" target="_blank" href="/trader2/<?= $company->id ?>/entrance-with-usdt">Закупится основной валютой</a>
+                        <btn class="btn btn-danger" target="_blank" onclick="usdtWithAll('/trader2/<?= $company->id ?>/usdt-with-all')">Отменить все и перейти в USDT</btn>
+                        <!--<a class="btn btn-danger" target="_blank" href="/trader2/<?= $company->id ?>/usdt-with-all">Отменить все и перейти в USDT</a>-->
+                        <btn class="btn btn-danger" target="_blank" onclick="usdtWithAll('/trader2/<?= $company->id ?>/usdt-with-entrance')">перейти в USDT с входной валютой</btn>
+                        <btn class="btn btn-danger" target="_blank" onclick="usdtWithAll('/trader2/<?= $company->id ?>/entrance-with-usdt')">Закупится основной валютой</btn>
                     </p>
                 </div>
 
             <?php } ?>
         </div>
     </div>
-    <div style="" class="col-md-6">
-        <div  class="row">
-            <div class="col-xs-12">
-                <p>Totals</p>
 
-                <div class="col-md-6">
-                    <?php foreach ($balances[0]->balances as $symbol=>$balance){ ?>
-                        <?php if($balance['value']>0) {?>
-
-                            <p><b style="font-size: 24px"><?= $symbol ?></b>: <span style="font-size: 24px; color:lime">$(<?= number_format($balance['value'],2) ?>)</span> <?= number_format($balance['tokens'],2) ?></p>
-                        <?php } ?>
-                    <?php } ?>
-
-                    <div id="chartContainer" style="height: 370px; width: 100%;"></div>
-                </div>
-                <?php
-                $moneynow=0;
-                foreach ($balances[0]->balances as $bb){
-                    $moneynow+=floatval($bb['value']);
-                }
-                $money_was=0;
-                foreach ($balances[count($balances)-1]->balances as $bb){
-                    $money_was+=floatval($bb['value']);
-                }
-                echo $money_was."<br>";
-                $profit=$moneynow-$money_was;
-                $percent=$profit/$money_was*100;
-                ?>
-                <div class="col-md-6">
-                    <div><b>Profit:</b></div>
-                    <div>
-                        <span class="<?= $profit>0?'text-success':'text-danger' ?>" >$<?= number_format($profit,2)?></span>
-                        <span class="<?= $profit>0?'text-success':'text-danger' ?>" style="font-size: 24px"><i class="fas fa-caret-square-up"></i>(<?= number_format($percent,2)?>%)</span>
-                    </div>
-                    <?php $prev='1970-01-01 00:00:00'; ?>
-                    <?php foreach ($balances as $b){ ?>
-                        <?php
-                        if(abs(strtotime($prev)-strtotime($b->timestamp))<10){
-                            continue;
-                        }else{
-                            $prev=$b->timestamp;
-                        }
-                        ?>
-                        <p><?php echo  date('H:i',strtotime($b->timestamp)) ?> :
-                            <?php
-
-
-                            $total_usdt=0;
-                            foreach ($b->balances as $bb){
-                                $total_usdt+=$bb['value'];
-                            }
-                            echo $total_usdt;
-                            ?>
-
-                        </p>
-                    <?php }  ?>
-                </div>
-            </div>
-
-        </div>
-    </div>
 
 </div>
-
+<style>
+    table tr>* {
+        border:1px solid #eee;
+        padding:3px 10px;
+        min-width:75px;
+        text-align:center;
+    }
+    .listtopie-link {
+        font-size:16px;
+        margin: 3px 10px;
+    }
+    h4 {
+        margin-bottom:20px;
+        font-size:20px;
+    }
+    td.red {
+        color:red;
+    }
+    td.green {
+        color:#00d400;
+    }
+    .canceled{
+        color: orange;
+    }
+    .completed{
+        color: lime;
+    }
+</style>
 <div class="row" >
     <?php foreach ($companies as $company){?>
         <a class="btn btn btn-default" href="/trader2/<?= $company->id ?>/edit"><?= $company->name ?> </a>
@@ -191,21 +237,21 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 
 </div>
 <style>
+    .dropdown-item{
+        display: block;
+    }
+    .dropdown-menu {
+        background: #222424;
+        padding: 5px;
+        border: 1px solid;
+    }
     .campaign{
         padding: 10px;
         border: 1px solid white;
         border-radius: 5px;
         margin: 5px;
     }
-    .symbol{
-        color: black;
-        font-size: 24px;
-        font-weight: bold;
-    }
-    .rating,.depth-possibility{
-        color: black;
-        font-size: 12px;
-    }
+
 
     .text-success{
         color: lime;
@@ -220,6 +266,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         for(var i=0;i<trading_pairs.length;i++){
             var pair=trading_pairs[i];
             var options = {
+                theme: "dark1",
                 title: {
                     text: pair.trading_paid
                 },
@@ -292,4 +339,44 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 
     setTimeout(refresh, 60*1000)
 
+    function usdtWithAll(url) {
+        var accounts=[];
+        var inputs=$(this.event.target).parents('.campaign').find('input:checked');
+        $.each(inputs, function(){
+            accounts.push($(this).val());
+        });
+        $.ajax({
+            type : 'POST',
+            url : url,
+            data : {'accounts':accounts}
+        }).done(function(data) {
+            //console.log(data)
+            location=location;
+        }).fail(function() {
+            // Если произошла ошибка при отправке запроса
+            $("#output").text("error3");
+        })
+    }
+
 </script>
+<style>
+    .panel-default > .panel-heading {
+        color: #ffffff;
+        background-color: #1f2121;
+        border-color: #c3c3c3;
+    }
+    .panel-footer {
+
+        background-color: #3d403f;
+
+    }
+    .panel {
+        margin-bottom: 20px;
+        background-color: #1e1f1f;
+    }
+    span.total{
+        color: #4dd415;
+        font-weight: 700;
+        font-size: 20px;
+    }
+</style>

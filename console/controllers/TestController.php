@@ -117,7 +117,7 @@ class TestController extends Controller
     }
 
     public function actionMake2(){
-        $task=Task::findOne(19578);
+        $task=Task::findOne(790);
         $task->make2(5,6);
     }
 

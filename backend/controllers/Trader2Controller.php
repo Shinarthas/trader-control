@@ -53,6 +53,71 @@ class Trader2Controller extends Controller
         foreach ($trading_pairs as $trading_pair){
             $trading_pairs_remapped[$trading_pair->trading_paid]=$trading_pair;
         }
+        //фунуионал статистики по ордерам
+        $time=time();
+        $tasks=Task::find()->where(['>','time',time()-7*24*3600])->all();
+
+        $order_statistics=[
+            'hour'=>[
+                'total'=>0,
+                'failed'=>0,
+                'open'=>0,
+                'completed'=>0,
+                'canceled'=>0,
+                'buy'=>0,
+                'sell'=>0,
+            ],
+            'day'=>[
+                'total'=>0,
+                'failed'=>0,
+                'open'=>0,
+                'completed'=>0,
+                'canceled'=>0,
+                'buy'=>0,
+                'sell'=>0,
+            ],
+            'week'=>[
+                'total'=>0,
+                'failed'=>0,
+                'open'=>0,
+                'completed'=>0,
+                'canceled'=>0,
+                'buy'=>0,
+                'sell'=>0,
+            ]
+        ];
+        foreach ($tasks as $t){
+            if($t->time>$time-3600){
+                $order_statistics['hour']['total']+=1;
+                if($t->status==Task::STATUS_STARTED) $order_statistics['hour']['failed']++;
+                if($t->status==Task::STATUS_CREATED) $order_statistics['hour']['open']++;
+                if($t->status==Task::STATUS_COMPLETED) $order_statistics['hour']['completed']++;
+                if($t->status==Task::STATUS_CANCELED) $order_statistics['hour']['canceled']++;
+                if($t->sell) $order_statistics['hour']['sell']++;
+                else $order_statistics['hour']['buy']++;
+            }
+            if($t->time>$time-24*3600){
+                $order_statistics['day']['total']+=1;
+                if($t->status==Task::STATUS_STARTED) $order_statistics['day']['failed']++;
+                if($t->status==Task::STATUS_CREATED) $order_statistics['day']['open']++;
+                if($t->status==Task::STATUS_COMPLETED) $order_statistics['day']['completed']++;
+                if($t->status==Task::STATUS_CANCELED) $order_statistics['day']['canceled']++;
+                if($t->sell) $order_statistics['day']['sell']++;
+                else $order_statistics['day']['buy']++;
+            }
+            if($t->time>$time-7*24*3600){
+                $order_statistics['week']['total']+=1;
+                if($t->status==Task::STATUS_STARTED) $order_statistics['week']['failed']++;
+                if($t->status==Task::STATUS_CREATED) $order_statistics['week']['open']++;
+                if($t->status==Task::STATUS_COMPLETED) $order_statistics['week']['completed']++;
+                if($t->status==Task::STATUS_CANCELED) $order_statistics['week']['canceled']++;
+                if($t->sell) $order_statistics['week']['sell']++;
+                else $order_statistics['week']['buy']++;
+            }
+        }
+        //запрос балансов в кокретные моменты  времени
+
+        //конец функционала статистики по ордерам
 //        $top_currencies=[];
 //        $tc=CoinMarketCapApi::top();
 //        $tmp_rating=[];
@@ -77,6 +142,7 @@ class Trader2Controller extends Controller
             'orders'=>$orders,
             'period'=>$period,
             'trading_pairs_remapped'=>$trading_pairs_remapped,
+            'order_statistics'=>$order_statistics,
         ]);
     }
 
@@ -93,7 +159,7 @@ class Trader2Controller extends Controller
 
         $orders=Task::find()
             //->where(['>=','time',strtotime($date_start)+2*3600])->andWhere(['<','time',strtotime($date_start)+24*3600+2*3600])
-            ->andWhere(['<>','status',1])
+            ->andWhere(['not in','status',[1,3]])
             ->andWhere(['campaign_id'=>$id])
             ->orderBy([
             'time' => SORT_DESC,
@@ -102,24 +168,28 @@ class Trader2Controller extends Controller
             //->createCommand()->rawSql;
             ->all();
 
-        foreach ($trading_pairs as $trading_pair){
-            $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
-            $trading_pair->statistics=$tmp;
+        $trading_pairs2=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'limit'=>10]);
+        $trading_pairs2=$trading_pairs2->data;
+
+
+        foreach ($trading_pairs2 as $trading_pair2){
+            $data1=ApiRequest::statistics('v1/trader2/graphic',['symbol'=>$trading_pair2->trading_paid,'date_start'=>date('Y-m-d H:i:s',(time()-3600*24*2)),'date_end'=>date('Y-m-d H:i:s',(time())),'limit'=>999]);
+            $trading_pair2->statistics=$data1->data;
         }
         $trading_pairs_remapped=[];
-        foreach ($trading_pairs as $trading_pair){
-            $trading_pairs_remapped[$trading_pair->trading_paid]=$trading_pair;
+        foreach ($trading_pairs2 as $trading_pair2){
+            $trading_pairs_remapped[$trading_pair2->trading_paid]=$trading_pair2;
         }
-
+        $trading_pairs_remapped['BTCUSDT']=json_decode(json_encode(['ass'=>'ass']));
+        $trading_pairs_remapped['BTCUSDT']->statistics=ApiRequest::statistics('v1/trader2/graphic',['symbol'=>'BTCUSDT','date_start'=>date('Y-m-d H:i:s',(time()-3600*24*2)),'date_end'=>date('Y-m-d H:i:s',(time())),'limit'=>999])->data;
 
         $Companies=Campaign::find()->where(['id'=>$id])->one();
 
         $statistics=[];
         $date=time();
-        for($i=$date-7*24*3600;$i<$date;$i+=12*3600){
-            $statistics['balances'][]=$Companies->getBalanceDate($i);
+        for($i=$date-7*24*3600;$i<=$date+10;$i+=12*3600){
+            //$statistics['balances'][]=$Companies->getBalanceDate($i);
         }
-
 
         return $this->render("orders", [
             'date_start' => $date_start,
@@ -127,7 +197,8 @@ class Trader2Controller extends Controller
             'trading_pairs'=>$trading_pairs,
             'orders'=>$orders,
             'trading_pairs_remapped'=>$trading_pairs_remapped,
-            'statistics'=>$statistics
+            'statistics'=>$statistics,
+            'trading_pairs'=>$trading_pairs_remapped
         ]);
     }
 
@@ -483,7 +554,21 @@ class Trader2Controller extends Controller
                  'textColor'=>"#ffffff",
                  'start'=>date('Y-m-d 23:55:00',$i+4*3600)
              ];
+             $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'limit'=>10]);
+             $trading_pairs=$trading_pairs->data;
+             $period=Trading::getPeriod();
 
+             $orders=Task::find()->orderBy('id desc')->limit(100)->all();
+
+             foreach ($trading_pairs as $trading_pair){
+                 $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
+                 $trading_pair->statistics=$tmp;
+             }
+
+             $trading_pairs_remapped=[];
+             foreach ($trading_pairs as $trading_pair){
+                 $trading_pairs_remapped[$trading_pair->trading_paid]=$trading_pair;
+             }
 
              $data1=ApiRequest::statistics('v1/trader2/graphic',['symbol'=>'BTCUSDT','date_start'=>date('Y-m-d H:i:s',($i)),'date_end'=>date('Y-m-d H:i:s',($i)+900),'limit'=>1]);
              reset($data1->data); //Ensure that we're at the first element
@@ -521,6 +606,9 @@ class Trader2Controller extends Controller
      }
 
      public function actionUsdtWithAll($id){
+        $text_info='';
+         ob_start();
+
 	    //отменим все ордер
          $tasks=Task::find()->where(['campaign_id'=>$id])->andWhere(['not in','status',[1,4,5]])->all();
          foreach ($tasks as $task){
@@ -529,23 +617,34 @@ class Trader2Controller extends Controller
 	    $campaign=Campaign::findOne($id);
 
          $campaign->getUsdtWithAll();
+         $out1 = ob_get_contents();
+         ob_end_clean();
+         return $this->render("usdt_with_all",['info'=>$out1]);
      }
 
     public function actionUsdtWithEntrance($id){
         //отменим все ордер
-        $tasks=Task::find()->where(['campaign_id'=>$id,'sell'=>0])->andWhere(['not  in','status',[0,1,4,5]])->all();
+        ob_start();
+        $tasks=Task::find()->where(['campaign_id'=>$id,'sell'=>0])->andWhere(['not in','status',[0,1,4,5]])->all();
         foreach ($tasks as $task){
             $task->cancelOrder();
         }
         $campaign=Campaign::findOne($id);
 
         $campaign->getUsdtWithEntrance();
+        $out1 = ob_get_contents();
+        ob_end_clean();
+        return $this->render("usdt_with_entrance");
     }
 
     public function actionEntranceWithUsdt($id){
+        ob_start();
         $campaign=Campaign::findOne($id);
 
         $campaign->getEntranceWithUsdt();
+        $out1 = ob_get_contents();
+        ob_end_clean();
+        return $this->render("entrance_usdt_with");
     }
 
     public function actionManualOrder(){

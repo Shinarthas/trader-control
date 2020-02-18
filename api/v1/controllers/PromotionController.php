@@ -20,7 +20,6 @@ class PromotionController extends AuthApiController
 
 	    $accounts=PromotionAccount::find()->select('account_id')
             ->where(['promotion_id'=>$promotion_id])->all();
-	    Log::log(ArrayHelper::toArray($promotion_id),false,'accounts');
 	    return ResponseRender::success($accounts);
 
     }

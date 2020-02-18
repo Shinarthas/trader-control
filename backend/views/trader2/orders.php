@@ -34,9 +34,9 @@ function getPeriod($date){
 
 
 <ul class="nav nav-tabs">
-    <li class="active"><a data-toggle="tab" href="#orders">Orders</a></li>
-    <li><a data-toggle="tab" href="#control">control</a></li>
-    <li><a data-toggle="tab" href="#statistics">statistics</a></li>
+    <li class="active"><a data-toggle="tab" class="except" href="#orders">Orders</a></li>
+    <li><a data-toggle="tab" class="except" href="#control">control</a></li>
+    <li><a data-toggle="tab" class="except" href="#statistics">statistics</a></li>
 
 </ul>
 
@@ -73,7 +73,71 @@ function getPeriod($date){
                             <td><?=$t->currency_two;?></td>
                             <td><?=$t->tokens_count;?></td>
                             <td><?=$t->start_rate;?></td>
-                            <td><?=$t->rate;?></td>
+                            <td>
+                                <?php
+                                $color="white";
+                                $icon="";
+                                ?>
+                                <?php if($t->status!=\common\models\Task::STATUS_CANCELED  && $t->start_rate){
+                                    if($t->start_rate){
+                                        if($t->sell){
+                                            if($t->start_rate>$t->rate) {
+                                                $color="red";
+                                                $icon="<i class=\"fa fa-caret-down\" style='color: $color'></i>";
+                                            }else{
+                                                $color="lime";
+                                                $icon="<i class=\"fa fa-caret-up\" style='color: $color'></i>";
+                                            }
+                                        }else{
+                                            if($t->start_rate>$t->rate) {
+                                                $color="lime";
+                                                $icon="<i class=\"fa fa-caret-down\" style='color: $color'></i>";
+                                            }else{
+                                                $color="red";
+                                                $icon="<i class=\"fa fa-caret-up\" style='color: $color'></i>";
+                                            }
+                                        }
+
+                                    }
+
+                                }elseif(!$t->start_rate && $t->status!=\common\models\Task::STATUS_CANCELED){
+
+
+                                   if(isset($trading_pairs[$t->currency_one.$t->currency_two])){
+                                       $time=$t->time*1000;
+                                       foreach ($trading_pairs[$t->currency_one.$t->currency_two]->statistics as $time_milliseconds=>$stat ){
+                                           if(abs($time-$time_milliseconds)>350*1000){
+                                               if($t->sell){
+                                                   if($stat->open>$t->rate) {
+                                                       $color="red";
+                                                       $icon="<i class=\"fa fa-caret-down\" style='color: $color'></i>";
+                                                   }else{
+                                                       $color="lime";
+                                                       $icon="<i class=\"fa fa-caret-up\" style='color: $color'></i>";
+                                                   }
+                                               }else{
+                                                   if($stat->open>$t->rate) {
+                                                       $color="lime";
+                                                       $icon="<i class=\"fa fa-caret-down\" style='color: $color'></i>";
+                                                   }else{
+                                                       $color="red";
+                                                       $icon="<i class=\"fa fa-caret-up\" style='color: $color'></i>";
+                                                   }
+                                               }
+                                               break;
+                                           }
+                                       }
+                                   }
+                                }
+
+                                ?>
+                                <span class="indicator" style="color: <?=$color?>">
+                                    <?= number_format($t->rate,4);?>
+                                    <?= $icon?>
+                                </span>
+
+
+                            </td>
                             <td><? if($t->status==1){echo "<b style='color:red'>error</b>";} else if($t->status==2){echo "OK";
                                     if($t->progress != 100) {
                                         echo '<b style="color:red"> ('.$t->progress.'%)</b>';
@@ -254,5 +318,25 @@ function getPeriod($date){
     }
 
     setTimeout(refresh, 60*1000)
-
+    function createOrder() {
+        var data={
+            'campaign_id':<?= $campaign->id?>,
+            'currency_one':$('#symbol1').val(),
+            'currency_two':$('#symbol2').val(),
+            'percent':$('#percent_amt').val(),
+            'profit':$('#percent_profit').val(),
+            'is_buy':$('#is_buy').prop('checked'),
+        };
+        $.ajax({
+            type : 'POST',
+            url : '/trader2/manual-order',
+            data : data
+        }).done(function(data) {
+            console.log(data)
+        }).fail(function() {
+            // Если произошла ошибка при отправке запроса
+            $("#output").text("error3");
+        })
+        console.log(data)
+    }
 </script>

@@ -1,7 +1,9 @@
 <?php
 namespace backend\controllers;
 
+use common\models\Account;
 use Yii;
+use yii\helpers\ArrayHelper;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use yii\filters\AccessControl;
@@ -52,9 +54,25 @@ class SiteController extends Controller
 		foreach ($markets as &$market){
 		    $res=ApiRequest::statistics('v1/market/get-statistics',['id'=>$market->id]);
 		    $market->statistics=$res->data;
+		    //print_r($res->data);
         }
-		
-        return $this->render('index', ['markets'=>$markets]);
+		$col=[];
+		foreach ($markets as &$market ){
+            $col[]= $market->statistics->now->usdt_balance;
+        }
+		asort($col);
+		$accounts=Account::find()->all();
+        $accounts=ArrayHelper::toArray($accounts);
+		foreach ($accounts as &$account){
+            $account['balance']= ApiRequest::statistics('v1/account/get-balance-time', ['id'=>$account['id'],'timestamp'=>time()-120]);
+        }
+
+        $m=[];
+        foreach ( $col as $key=>$b ) {
+            $m[]= $markets[$key]    ;
+        }
+        $m=array_reverse($m);
+        return $this->render('index', ['markets'=>$m,'accounts'=>$accounts]);
     }
 
     /**

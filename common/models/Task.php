@@ -143,17 +143,14 @@ class Task extends \yii\db\ActiveRecord
             $account = $this->promotion->accounts[array_rand($this->promotion->accounts,1)];
         else
         {
-            Log::log(['calculate']);
             $account = $promotion->calculateAccount($this->sell,$this->tokens_count);
 
             if(!$account || empty($account) || $account===0)
             {
-                Log::log(['account'=>$account,'normas'=>'normas']);
                 $this->status = self::STATUS_ACCOUNT_NOT_FOUND;
                 $this->save();
                 return false;
             }
-            Log::log(['account'=>ArrayHelper::toArray($account),'gavno'=>'gavno']);
         }
 
         $this->account_id = $account->id;
@@ -232,24 +229,7 @@ class Task extends \yii\db\ActiveRecord
             $resultStatistics = ApiRequest::statistics('v1/orders/create',
                 ArrayHelper::toArray($this));
         }else{
-//            echo "--------------------\n\n";
-            //echo $account->type."\n";
-            print_r([
-                'id'=>$this->id,
-                'sell'=>$this->sell,
-                'market_id'=>$account->type,
-                'currency_one'=>$currency_one,
-                'currency_two' => $currency_two,
-                'account_id' => $this->account_id,
-                'tokens_count' => $this->tokens_count,
-                'created_at' => $this->created_at,
-                'promotion_id' => $this->promotion_id,
-                'rate' => $this->rate,
-                'use_paid_proxy' => 0,
-            ]);
             print_r($result);
-//            die();
-
         }
 
         $this->save();
@@ -257,7 +237,6 @@ class Task extends \yii\db\ActiveRecord
         return $result;
     }
 	public static function possibility(Promotion $promotion){
-        //die('die');
         echo $promotion->id;
         $account = $promotion->accounts[array_rand($promotion->accounts,1)];
 
@@ -507,6 +486,14 @@ class Task extends \yii\db\ActiveRecord
             $this->canceled = 1;
             $this->save();
             $res1=ApiRequest::statistics('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status]);
+        }else{
+            Log::log($res);
+            $this->status=Task::STATUS_STARTED;
+            $this->canceled = 1;
+            $this->save();
+            $res1=ApiRequest::statistics('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status]);
+            print_r($res1);
+            $res1=ApiRequest::accounts('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status]);
 
         }
 
