@@ -120,5 +120,11 @@ class TestController extends Controller
         $task=Task::findOne(790);
         $task->make2(5,6);
     }
+    public function actionError(){
+	    return 10/0;
+    }
+    public function actionUsdtRates(){
+	    print_r(Task::getCurrencyToUsdt());
+    }
 
 }

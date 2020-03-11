@@ -89,14 +89,66 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 <td>hour</td>
             </tr>
             <tr>
-                <td>30/45 <span style="color: #00a300">+6%</span></td>
-                <td>8/12 <span style="color: #00a300">+3.1%</span></td>
-                <td>2/3 <span style="color: #00a300">+0.8%</span></td>
+                <td>
+                    <div class="col-xs-6"><i class="fa fa-user"></i><?= $order_statistics['week']['human'] ?></div>
+                    <div class="col-xs-6"><i class="fa fa-cog"></i><?= $order_statistics['week']['bot'] ?></div>
+                </td>
+                <td>
+                    <div class="col-xs-6"><i class="fa fa-user"></i><?= $order_statistics['day']['human'] ?></div>
+                    <div class="col-xs-6"><i class="fa fa-cog"></i><?= $order_statistics['day']['bot'] ?></div>
+                </td>
+                <td>
+                    <div class="col-xs-6"><i class="fa fa-user"></i><?= $order_statistics['hour']['human'] ?></div>
+                    <div class="col-xs-6"><i class="fa fa-cog"></i><?= $order_statistics['hour']['bot'] ?></div>
+                </td>
             </tr>
             <tr>
-                <td>0.00046</td>
-                <td>0.00023</td>
-                <td>0.00004</td>
+                <td>
+                    <?php echo $profit_statistics['week']['profitable_orders']."/".$profit_statistics['week']['total_orders'] ?>
+                    <?php $number=number_format(
+                        $balance_statistics['now']/$balance_statistics['week']*100-100
+                        ,2);
+                    $color=$number>0?'#00a300':'red'
+                    ?>
+                    <span style="color: <?=$color?>">
+                        <?= $number ?>%</span></td>
+                <td>
+                    <?php echo $profit_statistics['day']['profitable_orders']."/".$profit_statistics['day']['total_orders'] ?>
+                    <?php $number=number_format(
+                        $balance_statistics['now']/$balance_statistics['day']*100-100
+                        ,2);
+                    $color=$number>0?'#00a300':'red'
+                    ?>
+                    <span style="color: <?=$color?>">
+                        <?= $number ?>%
+                    </span></td>
+                <td>
+                    <?php echo $profit_statistics['hour']['profitable_orders']."/".$profit_statistics['hour']['total_orders'] ?>
+                    <?php $number=number_format(
+                        $balance_statistics['now']/$balance_statistics['hour']*100-100
+                        ,2);
+                    $color=$number>0?'#00a300':'red'
+                    ?>
+                    <span style="color:  <?=$color?>">
+                        <?= $number ?>%
+                    </span></td>
+            </tr>
+            <tr>
+                <?php
+                $number=number_format($balance_statistics['now']-$balance_statistics['week'],2);
+                $color=$number>0?'#00a300':'red'
+                ?>
+                <td style="color: <?= $color ?>;"><?= $number ?></td>
+                <?php
+                $number=number_format($balance_statistics['now']-$balance_statistics['day'],2);
+                $color=$number>0?'#00a300':'red'
+                ?>
+                <td style="color: <?= $color ?>;"><?= $number ?></td>
+                <?php
+                $number=number_format($balance_statistics['now']-$balance_statistics['hour'],2);
+                $color=$number>0?'#00a300':'red'
+                ?>
+                <td style="color: <?= $color ?>;"><?= $number ?></td>
             </tr>
         </table>
         <div class="row currency_wrapper">
@@ -351,7 +403,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
             data : {'accounts':accounts}
         }).done(function(data) {
             //console.log(data)
-            location=location;
+            //location=location;
         }).fail(function() {
             // Если произошла ошибка при отправке запроса
             $("#output").text("error3");

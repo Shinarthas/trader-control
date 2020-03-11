@@ -1,6 +1,8 @@
 <?
 namespace common\components;
 
+use common\models\Log;
+
 class ApiRequest
 {
 	public static function accounts($action, $data, $proxy = false) {
@@ -11,7 +13,7 @@ class ApiRequest
 		return self::request('control', $action, $data);
 	}
 	
-	public static function statistics($action, $data, $proxy = false) {
+	public static function statistics($action, $data=[], $proxy = false) {
 		return self::request('statistics', $action, $data);
 	}
 	
@@ -36,7 +38,11 @@ class ApiRequest
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 		
 		$res = curl_exec($ch);
-		
+		$response=json_decode($res);
+		if(strpos($action,'/log')===false && !isset($response->status)){
+		    Log::log($response,false, 'ApiRequest');
+        }
+
 		return json_decode($res);
 	}
 }

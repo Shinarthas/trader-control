@@ -51,6 +51,10 @@ return [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning', YII_DEBUG ? 'info' : 0],
                 ],
+                [
+                    'class' => 'common\assets\CustomTarget',
+                    'levels' => ['error'],
+                ],
             ],
         ],
         'errorHandler' => [

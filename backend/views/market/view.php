@@ -12,7 +12,7 @@ use common\components\ApiRequest;
         <div class="row">
             <?php $index=0; ?>
             <?php foreach ($accounts as $account){ ?>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="panel panel-default">
                         <div class="panel-heading"><?= $account['name']?></div>
                         <div class="panel-body">
@@ -164,6 +164,17 @@ use common\components\ApiRequest;
     }
 </style>
 <script>
+    var colorsC= {
+        USDT: "#0eff1a",
+        BTC: "#fff236",
+        ETH: "#61655d",
+        TRX: "#ff3847",
+        BNB: "#da9aff",
+        ZEC: "#ffc69e",
+        XRP: "#5494ff",
+        XMR: "#ff7a39",
+    };
+    var trading_pairs=<?php echo json_encode($trading_pairs); ?>;
     var accounts=<?= json_encode($accounts)?>;
     window.onload = function () {
         $( ".chart1" ).each(function( index ) {
@@ -174,17 +185,26 @@ use common\components\ApiRequest;
             var ctx = canvas2.getContext('2d');
             var balances=[];
             var  labels=[];
+
             for(var i=0;i<accounts[inder_index].balances.length;i++){
                 if(accounts[inder_index].balances[1].data!=undefined){
                     balances.push(accounts[inder_index].balances[i].data.in_usd)
-                    labels.push(dateFormat('H:i',new Date(accounts[inder_index].balances[i].data.balances[0].timestamp*1000)))
+                    labels.push(dateFormat('m/d H:i',new Date(accounts[inder_index].balances[i].data.balances[0].timestamp*1000)))
                 }
 
                 else{
                     balances.push(0);
-                    labels.push(dateFormat('H:i',""))
+                    labels.push(dateFormat('m/d  H:i',""))
                 }
 
+            }
+            var colors=[];
+            for(var k=0;k<labels.length;k++){
+                console.log(labels[k],hashCode(labels[k]),intToRGB(hashCode(labels[k])))
+                if(colorsC[labels[k]]==undefined)
+                    colors.push('#'+intToRGB(hashCode(labels[k]+'asd')))
+                else
+                    colors.push(colorsC[labels[k]])
             }
             console.log(balances);
             var data = {
@@ -227,8 +247,28 @@ use common\components\ApiRequest;
             console.log(tmpData);
             if(tmpData!=undefined){
                 for(var i=0;i<tmpData.balances.length;i++){
-                    ms.push(tmpData.balances[i].name);
-                    in_usd.push(tmpData.balances[i].value);
+                    if(trading_pairs[tmpData.balances[i].name+'USDT']!= undefined) {
+                        if((tmpData.balances[i].value + tmpData.balances[i].value_in_orders)
+                            *trading_pairs[tmpData.balances[i].name+'USDT'].bid>1){
+                            ms.push(tmpData.balances[i].name);
+                            in_usd.push((tmpData.balances[i].value + tmpData.balances[i].value_in_orders)*trading_pairs[tmpData.balances[i].name+'USDT'].bid)
+                        }  
+                    }else if(tmpData.balances[i].name == 'USDT' || tmpData.balances[i].name=='USD'){
+                        if(tmpData.balances[i].value + tmpData.balances[i].value_in_orders>1){
+                            ms.push(tmpData.balances[i].name);
+                            in_usd.push((tmpData.balances[i].value + tmpData.balances[i].value_in_orders));
+                        }
+
+                    }
+                }
+                var labels=ms;
+                var colors=[];
+                for(var k=0;k<labels.length;k++){
+                    console.log(labels[k],hashCode(labels[k]),intToRGB(hashCode(labels[k])))
+                    if(colorsC[labels[k]]==undefined)
+                        colors.push('#'+intToRGB(hashCode(labels[k]+'asd')))
+                    else
+                        colors.push(colorsC[labels[k]])
                 }
                 console.log(tmpData);
                 var myChart = new Chart(ctx, {
@@ -237,15 +277,7 @@ use common\components\ApiRequest;
                         labels: ms,
 
                         datasets: [{
-                            backgroundColor: [
-                                "#ff8000",
-                                "#3498db",
-                                "#95a5a6",
-                                "#9b59b6",
-                                "#f1c40f",
-                                "#e74c3c",
-                                "#34495e"
-                            ],
+                            backgroundColor: colors,
                             data: in_usd
                         }]
                     }
@@ -253,5 +285,21 @@ use common\components\ApiRequest;
             }
 
         });
+    }
+    function hashCode(str) { // java String#hashCode
+        var hash = 0;
+        for (var i = 0; i < str.length; i++) {
+            hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        }
+
+        return hash;
+    }
+
+    function intToRGB(i){
+        var c = (i & 0x00FFFFFF)
+            .toString(16)
+            .toUpperCase();
+
+        return "00000".substring(0, 6 - c.length) + c;
     }
 </script>

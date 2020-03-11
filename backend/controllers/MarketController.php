@@ -34,21 +34,27 @@ class MarketController extends Controller
 		foreach ($accounts as &$account){
 
             $date=time();
-            for($i=$date-12*3600;$i<=$date+10;$i+=3600){
+            for($i=$date-24*3600;$i<=$date+10;$i+=3600){
                 $account['balances'][]= ApiRequest::statistics('v1/account/get-balance-time', ['id'=>$account['id'],'timestamp'=>$i]);
             }
         }
 		$acc_ids=[];
 		foreach ($accounts as $a)
             $acc_ids[]=$a['id'];
-		print_r($acc_ids);
 		$orders=Task::find()->orderBy('id desc')
             ->andWhere(['not in','status',[1,3]])
             ->andWhere(['in','account_id',$acc_ids])
             ->limit(100)->all();
 		//print_r(ArrayHelper::toArray())
-		
-        return $this->render('view', ['market'=>$market,'accounts'=>$accounts,'orders'=>$orders]);
+
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['includes'=>'USDT','limit'=>50]);
+        $trading_pairs_remaped=[];
+        foreach ($trading_pairs->data as $trading_pair){
+            $trading_pairs_remaped[$trading_pair->trading_paid]=$trading_pair;
+        }
+
+
+        return $this->render('view', ['market'=>$market,'accounts'=>$accounts,'orders'=>$orders,'trading_pairs'=>$trading_pairs_remaped]);
     }
 	
 	public function actionCampaign() {

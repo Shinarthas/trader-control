@@ -32,6 +32,10 @@ return [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
                 ],
+                [
+                    'class' => 'common\assets\CustomTarget',
+                    'levels' => ['error', 'warning'],
+                ],
             ],
         ],
         'errorHandler' => [
@@ -43,6 +47,7 @@ return [
             'rules' => [
 				'/<controller>/<id:\d+>' => '<controller>/view',
 				'/<controller>/<id:\d+>/<action>' => '<controller>/<action>',
+				'/reports/pair/<symbol:>' => 'reports/pair',
             ],
         ],
     ],

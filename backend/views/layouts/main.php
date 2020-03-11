@@ -30,6 +30,10 @@ AppAsset::register($this);
 		a,a:hover {
 			text-decoration:none;
 		}
+        .dropdown-menu{
+            background: #292929;
+            border: 1px solid white;
+        }
 		#background{
 			background:url("/images/1.jpg");
 			 min-height: 100%;
@@ -88,7 +92,7 @@ AppAsset::register($this);
 			box-shadow: inset -3px -3px 1.5px 0px #0000000d;
 			
 		}
-		.menu a {
+		.menu a, .menu .menu-item {
 			color:#f9f9f9;
 			display:block;
 			font-size:15px;
@@ -121,10 +125,17 @@ AppAsset::register($this);
 		.trade-blocks>div:hover {
 			background: #00000033;
 		}
-		.trade-blocks>div img.market-logo,.trade-blocks>div>svg {
+        .trade-blocks>div img.market-logo,.trade-blocks>div>svg {
+            height:100px;
+            display: block;
+            filter: grayscale(0.6);
+
+            margin: 36px auto;
+        }
+		.trade-blocks>div img.market-logo.empty,.trade-blocks>div>svg.empty {
 			height:100px;
 			display: block;
-			filter: grayscale(0.6);
+			filter: grayscale(1);
 			
 			    margin: 36px auto;
 		}
@@ -240,15 +251,28 @@ AppAsset::register($this);
 
 	<div class="container">
 		<div class="menu hidden-xs">
-			<a href="/">Home</a>
+			<a href="/" style="margin-bottom: 30px;">Terminal</a>
+            <div class="dropdown" style="margin-bottom: 30px;">
+                <div class="dropdown-toggle menu-item" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Core <i class="fa fa-caret-down"></i>
+                </div>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <a  class="dropdown-item"  href="/reports/markets">Market Analytics</a>
+                    <a  class="dropdown-item" href="/reports/prediction">Prediction Statistics</a>
+                    <!--<a  class="dropdown-item" href="/reports/menu1">MA menu2</a>-->
+                </div>
+            </div>
+
 			<!--<a href="/">Markets</a>-->
-			<a href="/trader2">Trader 2.0</a>
+			<a href="/trader2" style="margin-bottom: 30px;">Trader 2.0</a>
 			<!--<a href="/trader2/possibility?symbol=XRPBTC&percent_drop=0.006&percent_bounce=0.001&percent_profit=0.004&timeout=14400&date_start=2019-01-01">Trader 2.0 possibility</a>-->
 			<a href="/trader2/pairs">Pair rating</a>
 			<!--<a href="/trader2/cmc">Cmc</a>-->
 			<!--<a href="/possibility">possibility</a>-->
 			<a href="/account">Accounts</a>
 			<a href="/currency">Currencies</a>
+			<a href="/reports">Reports</a>
+
             <?php
             $start = date("Y-m-d",strtotime('this week'));
             $end=date("Y-m-d",strtotime('this week')+3600*14*7);
@@ -411,10 +435,13 @@ AppAsset::register($this);
 <script src="/js/dateFormat.js"></script>
 <script>
     $(function () {
-        $('a').not('.except').click(function () {
+        $('a.loader').click(function () {
             $('.loading').css('display','block')
         })
     })
+    function hideRows() {
+        
+    }
 </script>
 </html>
 <?php $this->endPage() ?>

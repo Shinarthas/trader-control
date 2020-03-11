@@ -5,6 +5,7 @@
 /* @var $trading_pairs array */
 /* @var $balances array */
 
+use common\models\Task;
 use common\components\ApiRequest;
 use yii\bootstrap\ActiveForm;
 use yii\web\View;
@@ -106,7 +107,7 @@ function getPeriod($date){
                                    if(isset($trading_pairs[$t->currency_one.$t->currency_two])){
                                        $time=$t->time*1000;
                                        foreach ($trading_pairs[$t->currency_one.$t->currency_two]->statistics as $time_milliseconds=>$stat ){
-                                           if(abs($time-$time_milliseconds)>350*1000){
+                                           if(abs($time-$time_milliseconds)>350*1000 &&  abs($time-$time_milliseconds)<900*1000){
                                                if($t->sell){
                                                    if($stat->open>$t->rate) {
                                                        $color="red";
@@ -221,7 +222,35 @@ function getPeriod($date){
         <button class="btn btn-primry"  onclick="createOrder()" style="color: black" type="button">CreateOrder</button>
     </div>
     <div id="statistics" class="tab-pane fade">
+        <?php
+        $pairs=[];
+        foreach ($orders  as $order){
+            $do_break=0;
+            foreach ($pairs as $pair){
+                if($pair['currency_one']==$order->currency_one &&
+                    $pair['currency_two']==$order->currency_two){
+                    $do_break=1;//такая валюта уже ест
+                    break;
+                }
+            }
+            if($do_break)
+                continue;
+            $p=[];
+            $p['currency_one']=$order->currency_one;
+            $p['currency_two']=$order->currency_two;
+            $pairs[]=$p;
+        }
+        ?>
         <h3>Statistics</h3>
+        <?php foreach($pairs as $pair){ ?>
+            <button class="btn btn-default statistics-button" onclick="loadPairStatistics('<?= $pair['currency_one']?>','<?=$pair['currency_two'] ?>')"><?php echo $pair['currency_one']. "/" .$pair['currency_two'] ?></button>
+        <?php } ?>
+        <div class="statistics-wrapper">
+
+        </div>
+        <div class="orders-wrapper">
+
+        </div>
         <div class="statistics-chart"></div>
     </div>
 </div>
@@ -266,7 +295,7 @@ function getPeriod($date){
 </style>
 <script>
     var statistics=<?= json_encode($statistics)?>;
-
+    var trading_pairs=<?= json_encode($trading_pairs);?>
 </script>
 <script>
     window.onload = function () {
@@ -338,5 +367,335 @@ function getPeriod($date){
             $("#output").text("error3");
         })
         console.log(data)
+    }
+
+    function loadPairStatistics(currency_one,currency_two) {
+        $('.statistics-button').removeClass('btn-primary').addClass('.btn-default');
+        $(this.event.target).addClass('btn-primary');
+        console.log(this.event.target)
+        $.ajax({
+            type : 'POST',
+            url : '/trader2/load-pair-statistics',
+            data : {
+                currency_one:currency_one,
+                currency_two:currency_two,
+                id:<?= $campaign->id?>
+            }
+        }).done(function(data) {
+            buildTable(data)
+            BuildStatTable(data)
+        }).fail(function() {
+            // Если произошла ошибка при отправке запроса
+            $("#output").text("error3");
+        })
+    }
+    function BuildStatTable(data) {
+        var order_statistics={
+            day:{
+                total:0,
+                failed:0,
+                open:0,
+                completed:0,
+                canceled:0,
+                buy:0,
+                sell:0,
+                profit:0,
+                profitable_orders:0,
+                usdt_dif:0,
+            },
+            hour:{
+                total:0,
+                failed:0,
+                open:0,
+                completed:0,
+                canceled:0,
+                buy:0,
+                sell:0,
+                profit:0,
+                profitable_orders:0,
+                usdt_dif:0,
+            },
+            week:{
+                total:0,
+                failed:0,
+                open:0,
+                completed:0,
+                canceled:0,
+                buy:0,
+                sell:0,
+                profit:0,
+                profitable_orders:0,
+                usdt_dif:0,
+            }
+        }
+        var time=new Date().getTime() /1000;
+        for (var i=0;i<data.length;i++){
+            var order=data[i];
+            if(order.time>time-3600){
+                order_statistics['hour']['total']+=1;
+                if(order.status==<?= Task::STATUS_STARTED?> ) order_statistics['hour']['failed']++;
+                if(order.status==<?= Task::STATUS_CREATED?>) order_statistics['hour']['open']++;
+                if(order.status==<?= Task::STATUS_COMPLETED?>) order_statistics['hour']['completed']++;
+                if(order.status==<?=Task::STATUS_CANCELED?>) order_statistics['hour']['canceled']++;
+                if(order.sell) order_statistics['hour']['sell']++;
+                else order_statistics['hour']['buy']++;
+            }
+            if(order.time>time-24*3600){
+                order_statistics['day']['total']+=1;
+                if(order.status==<?= Task::STATUS_STARTED?> ) order_statistics['day']['failed']++;
+                if(order.status==<?= Task::STATUS_CREATED?>) order_statistics['day']['open']++;
+                if(order.status==<?= Task::STATUS_COMPLETED?>) order_statistics['day']['completed']++;
+                if(order.status==<?=Task::STATUS_CANCELED?>) order_statistics['day']['canceled']++;
+                if(order.sell) order_statistics['day']['sell']++;
+                else order_statistics['day']['buy']++;
+            }
+            if(order.time>time-7*24*3600){
+                order_statistics['week']['total']+=1;
+                if(order.status==<?= Task::STATUS_STARTED?> ) order_statistics['week']['failed']++;
+                if(order.status==<?= Task::STATUS_CREATED?>) order_statistics['week']['open']++;
+                if(order.status==<?= Task::STATUS_COMPLETED?>) order_statistics['week']['completed']++;
+                if(order.status==<?=Task::STATUS_CANCELED?>) order_statistics['week']['canceled']++;
+                if(order.sell) order_statistics['week']['sell']++;
+                else order_statistics['week']['buy']++;
+            }
+        }
+        for (var i=0;i<data.length;i++){
+            var order=data[i];
+            if(order.status==<?= Task::STATUS_COMPLETED?>) {
+                var profit = 0;
+                var dif = 0;
+                var was = 0;
+                var became = 0;
+                if (order.start_rate) {
+                    if (order.sell)
+                        profit = order.rate / order.start_rate * 100 - 100;
+                    else
+                        profit = order.start_rate / order.rate * 100 - 100;
+
+                    //определяем размер  ставки в usdt
+                    if (trading_pairs[order['currency_two'] + 'USDT'] != undefined) {
+                        for (const [time_milliseconds, stat] of Object.entries(trading_pairs[order['currency_two'] + 'USDT'].statistics)) {
+                            if (Math.abs(time*1000 - parseInt(time_milliseconds)) > 350 * 1000 && Math.abs(time*1000 - parseInt(time_milliseconds)) < 900 * 1000) {
+                                was=order.tokens_count*order.start_rate*stat.open;
+                                became=order.tokens_count*order.rate*stat.open;
+                                break;
+                            }
+                        }
+                    }
+                    if (order.time > time - 3600) {
+                        order_statistics['hour']['profit'] += profit;
+                        order_statistics['hour']['profitable_orders'] += profit > 0 ? 1 : 0;
+                        order_statistics['hour']['usdt_dif'] += was-became;
+                    }
+                    if (order.time > time - 24 * 3600) {
+                        order_statistics['day']['profit'] += profit;
+                        order_statistics['day']['profitable_orders'] += profit > 0 ? 1 : 0;
+                        order_statistics['day']['usdt_dif'] += was-became;
+
+                    }
+                    if (order.time > time - 7 * 24 * 3600) {
+                        order_statistics['week']['profit'] += profit;
+                        order_statistics['week']['profitable_orders'] += profit > 0 ? 1 : 0;
+                        order_statistics['week']['usdt_dif'] += was-became;
+                    }
+                }else {
+                    if (trading_pairs[order['currency_one'] + order['currency_two']] != undefined) {
+                        for (const [time_milliseconds, stat] of Object.entries(trading_pairs[order['currency_one'] + order['currency_two']].statistics)) {
+                            if (Math.abs(time*1000 - parseInt(time_milliseconds)) > 350 * 1000 && Math.abs(time*1000 - parseInt(time_milliseconds)) < 900 * 1000) {
+                                if (order.sell){
+                                    profit = order.rate / stat['open'] * 100 - 100;
+                                }
+                                else{
+                                    profit = stat['open'] / order.rate * 100 - 100;
+                                }
+                                //определяем размер  ставки в usdt
+                                was=order.tokens_count*trading_pairs[order['currency_one'] + 'USDT'].statistics[time_milliseconds].open;
+                                became=order.tokens_count*order.rate*trading_pairs[order['currency_two'] + 'USDT'].statistics[time_milliseconds].open;
+
+                                if (order.time > time - 3600) {
+                                    order_statistics['hour']['profit'] += profit;
+                                    order_statistics['hour']['profitable_orders'] += profit > 0 ? 1 : 0;
+                                    order_statistics['hour']['usdt_dif'] += was-became;
+                                }
+                                if (order.time > time - 24 * 3600) {
+                                    order_statistics['day']['profit'] += profit;
+                                    order_statistics['day']['profitable_orders'] += profit > 0 ? 1 : 0;
+                                    order_statistics['day']['usdt_dif'] += was-became;
+                                }
+                                if (order.time > time - 7 * 24 * 3600) {
+                                    order_statistics['week']['profit'] += profit;
+                                    order_statistics['week']['profitable_orders'] += profit > 0 ? 1 : 0;
+                                    order_statistics['week']['usdt_dif'] += was-became;
+                                }
+
+                                break;
+                            }
+
+                        }
+
+                    }
+                }
+            }
+        }
+        var html="<table style=\"    width: 100%;\n" +
+            "    margin-bottom: 17px;\n" +
+            "    border-radius: 3px;\">\n" +
+            "            <tr>\n" +
+            "                <td>\n" +
+            "                    <span style=\"color: red\">"+order_statistics['week']['failed']+"</span>/\n" +
+            "                    <span style=\"color: orange\">"+order_statistics['week']['canceled']+"</span>/\n" +
+            "                    <span style=\"color: lightskyblue\">"+order_statistics['week']['completed']+"</span>/\n" +
+            "                    <span style=\"color: lightgreen\">"+order_statistics['week']['open']+"</span>/\n" +
+            "                    <span style=\"color: white\">"+order_statistics['week']['total']+"</span>\n" +
+            "                </td>\n" +
+            "                <td>\n" +
+            "                    <span style=\"color: red\">"+order_statistics['day']['failed']+"</span>/\n" +
+            "                    <span style=\"color: orange\">"+order_statistics['day']['canceled']+"</span>/\n" +
+            "                    <span style=\"color: lightskyblue\">"+order_statistics['day']['completed']+"</span>/\n" +
+            "                    <span style=\"color: lightgreen\">"+order_statistics['day']['open']+"</span>/\n" +
+            "                    <span style=\"color: white\">"+order_statistics['day']['total']+"</span>\n" +
+            "                </td>\n" +
+            "                <td>\n" +
+            "                    <span style=\"color: red\">"+order_statistics['hour']['failed']+"</span>/\n" +
+            "                    <span style=\"color: orange\">"+order_statistics['hour']['canceled']+"</span>/\n" +
+            "                    <span style=\"color: lightskyblue\">"+order_statistics['hour']['completed']+"</span>/\n" +
+            "                    <span style=\"color: lightgreen\">"+order_statistics['hour']['open']+"</span>/\n" +
+            "                    <span style=\"color: white\">"+order_statistics['hour']['total']+"</span>\n" +
+            "                </td>\n" +
+            "            </tr>\n" +
+            "            <tr>\n" +
+            "                <td>week</td>\n" +
+            "                <td>day</td>\n" +
+            "                <td>hour</td>\n" +
+            "            </tr>\n" +
+            "            <tr>\n" +
+            "                <td>\n" + order_statistics['week']['profitable_orders']+"/"+order_statistics['week']['total']+" ("+ (order_statistics['week']['profit']/order_statistics['week']['total']).toFixed(2)+"%)</td> \n"+
+            "                <td>\n" + order_statistics['day']['profitable_orders']+"/"+order_statistics['day']['total']+" ("+ (order_statistics['day']['profit']/order_statistics['day']['total']).toFixed(2)+"%)</td> \n"+
+            "                <td>\n" + order_statistics['hour']['profitable_orders']+"/"+order_statistics['hour']['total']+" ("+ (order_statistics['hour']['profit']/order_statistics['hour']['total']).toFixed(2)+"%)</td> \n"+
+
+"            </tr>\n"+
+            "            <tr>\n" +
+            "                <td>\n" + order_statistics['week']['usdt_dif'].toFixed(2)+"</td> \n"+
+            "                <td>\n" + order_statistics['day']['usdt_dif'].toFixed(2)+"</td> \n"+
+            "                <td>\n" + order_statistics['hour']['usdt_dif'].toFixed(2)+"</td> \n"+
+
+            "            </tr>\n"+
+"        </table>";
+        $('.statistics-wrapper').html(html);
+        console.log(order_statistics)
+    }
+
+
+
+    function buildTable(data) {
+        var html="<table>";
+        html+="<thead>\n" +
+            "                    <tr>\n" +
+            "                        <th>id</th>\n" +
+            "                        <th>direction</th>\n" +
+            "                        <th>acc</th>\n" +
+            "                        <th>date</th>\n" +
+            "                        <th>Currency one\n" +
+            "                        <th>Currency two</th>\n" +
+            "                        <th>tokens_count</th>\n" +
+            "                        <th>rate start</th>\n" +
+            "                        <th>rate</th>\n" +
+            "                        <th>status</th>\n" +
+            "                        <th>action</th>\n" +
+            "                    </tr>\n" +
+            "                    </thead>";
+
+        html+="<tbody>";
+        for (var i=0;i<data.length;i++){
+            html+=buildRow(data[i]);
+        }
+        html+="</tbody>";
+        html+="</table>";
+        $('.statistics-chart').html(html)
+    }
+    function buildRow(order){
+        var html="<tr>";
+
+        html+="<td>"+order['id']+"</td>"
+        html+="<td>"+(order['sell']==1?'<b style="color:orange">sell</b>':'<b style="color:purple;">buy</b>')+"</td>"
+        html+="<td>"+order['account_id']+"</td>"
+        html+="<td>"+dateFormat("d/m/y H:i",new Date(order['time']*1000))+"</td>"
+        html+="<td>"+order['currency_one']+"</td>"
+        html+="<td>"+order['currency_two']+"</td>"
+        html+="<td>"+order['tokens_count']+"</td>"
+        html+="<td>"+order['start_rate']+"</td>"
+        html+="<td>"+buildInfo(order)+"</td>"
+        html+="<td>"+buildStatus(order)+"</td>"
+        html+="<td>"+"</td>"
+
+        html+="</tr>";
+        return html;
+    }
+    function buildInfo(order) {
+        var color='white';
+        var icon="";
+        if(order['status']!=<?= \common\models\Task::STATUS_CANCELED?> && order['start_rate']){
+            if(order['sell']){
+                if(order['start_rate']>order['rate']){
+                    color='red';
+                    icon='<i class="fa fa-caret-down" style=\'color:'+color+'\'></i>';
+                }else{
+                    color='lime';
+                    icon='<i class="fa fa-caret-up" style=\'color:'+color+'\'></i>';
+                }
+            }else{
+                if(order['start_rate']>order['rate']){
+                    color='lime';
+                    icon='<i class="fa fa-caret-down" style=\'color:'+color+'\'></i>';
+                }else{
+                    color='red';
+                    icon='<i class="fa fa-caret-up" style=\'color:'+color+'\'></i>';
+                }
+            }
+
+
+
+        }else if(order['status']!=<?= \common\models\Task::STATUS_CANCELED?> ){
+            var time=new Date().getTime() ;
+            if(trading_pairs[order['currency_one']+order['currency_two']]!=undefined){
+                for (const [time_milliseconds, stat] of Object.entries(  trading_pairs[order['currency_one']+order['currency_two']].statistics)) {
+                    if(Math.abs(time-parseInt(time_milliseconds))>350*1000 && Math.abs(time-parseInt(time_milliseconds))<900*1000){
+
+                        if(order['sell']){
+                            if(stat['open']>order['rate']){
+                                color='red';
+                                icon='<i class="fa fa-caret-down" style=\'color:'+color+'\'></i>';
+                            }else{
+                                color='lime';
+                                icon='<i class="fa fa-caret-up" style=\'color:'+color+'\'></i>';
+                            }
+                        }else{
+                            if(stat['open']>order['rate']){
+                                color='lime';
+                                icon='<i class="fa fa-caret-down" style=\'color:'+color+'\'></i>';
+                            }else{
+                                color='red';
+                                icon='<i class="fa fa-caret-up" style=\'color:'+color+'\'></i>';
+                            }
+                        }
+                        break;
+                    }
+                }
+
+            }
+            /*for(var j=0;j<trading_pairs[order['currency_one']+order['currency_two'].statistics;j++]){
+                if(time-)
+            }*/
+        }
+
+        return '<span style="color:'+color+'" >'+order['rate']+icon+'</span>';
+    }
+    function buildStatus(order) {
+        if(order.status==1) return '<b style=\'color:red\'>error</b>';
+        if(order.status==2) return 'OK <b style="color:red"> ('+order.progress+'%)</b>';
+        if(order.status==3) return 'price error';
+        if(order.status==4) return '<span class="canceled">canceled by system</span>';
+        if(order.status==5) return '<span class="completed">completed</span>';
+        return  order.status
     }
 </script>

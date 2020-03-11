@@ -10,6 +10,7 @@ function removeqsvar($url, $varname) {
     return $urlpart . '?' . $newqs;
 }
 ?>
+
 <form>
     <div class="row">
         <div class="col-md-12">
@@ -74,7 +75,22 @@ function removeqsvar($url, $varname) {
         <?php foreach ($logs as $log){?>
             <tr>
                 <td ><?=$log->id?></td>
-                <td class="break"><?= json_encode($log->info)?></td>
+                <td class="break">
+                    <div class="log-wrapper">
+                        <p>
+                        <span class="except" type="button" data-toggle="collapse" data-target="#collapseExample-<?=$log->id?>" aria-expanded="false" aria-controls="collapseExample">
+                            <?=substr(json_encode($log->info),0,100)?>
+                        </span>
+                        </p>
+                        <div class="collapse" id="collapseExample-<?=$log->id?>">
+                            <div class="card card-body">
+                                <pre><?php print_r($log->info)?></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <span></span>
+
+                </td>
                 <td><?= $log->message?></td>
                 <td><?= $log->type?></td>
                 <td><?= $log->from?></td>
@@ -93,6 +109,9 @@ function removeqsvar($url, $varname) {
 
 </div>
 <style>
+    .log-wrapper{
+        max-width: 30vw;
+    }
     .table{
         background: #212529 !important;
         color: white !important;

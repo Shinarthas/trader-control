@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\assets\Hitbtc\Model\Order;
 use Yii;
 use common\components\ApiRequest;
 use yii\helpers\ArrayHelper;
@@ -22,6 +23,7 @@ use yii\helpers\ArrayHelper;
  * @property string $tokens_count
  * @property string $rate
  * @property int $progress
+ * @property int $is_user
  * @property string $data_json
  * @property string $external_id
  * @property int $time
@@ -30,6 +32,7 @@ use yii\helpers\ArrayHelper;
  */
 class Task extends \yii\db\ActiveRecord
 {
+    public static $currency_to_usdt=null;
     /**
      * {@inheritdoc}
      */
@@ -76,7 +79,7 @@ class Task extends \yii\db\ActiveRecord
     {
         return [
             [['promotion_id',  'value', 'random_curve', 'time'], 'required'],
-            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'progress', 'time', 'created_at', 'loaded_at'], 'integer'],
+            [['canceled','promotion_id', 'account_id', 'status', 'sell', 'progress', 'time', 'created_at', 'loaded_at','is_user'], 'integer'],
             [['random_curve', 'tokens_count','value',  'rate', 'start_rate'], 'number'],
             [['data_json'], 'string'],
         ];
@@ -103,6 +106,7 @@ class Task extends \yii\db\ActiveRecord
             'created_at' => 'Created At',
             'loaded_at' => 'Loaded At',
             'start_rate' => 'Start rate',
+            'is_user' => 'Is User',
         ];
     }
 
@@ -194,6 +198,13 @@ class Task extends \yii\db\ActiveRecord
         $this->status = self::STATUS_STARTED;
 
         $this->save();
+        if(is_null(self::$currency_to_usdt)){
+            self::$currency_to_usdt=self::getCurrencyToUsdt();
+        }
+        if(isset(self::$currency_to_usdt[$currency_one]) && self::$currency_to_usdt[$currency_one]->rate*$this->tokens_count<1){
+            Log::log(['msg'=>'Order total less than 1 dollar abort','order'=>ArrayHelper::toArray($this),'rates'=>ArrayHelper::toArray(self::$currency_to_usdt[$currency_one])],'warning','task');
+            return 0;
+        }
 
 
         //$tokens_count = round($this->value/$this->rate, 1);
@@ -228,8 +239,9 @@ class Task extends \yii\db\ActiveRecord
             //update same info on statistics serve
             $resultStatistics = ApiRequest::statistics('v1/orders/create',
                 ArrayHelper::toArray($this));
+            Log::log(ArrayHelper::toArray($resultStatistics),'info','propogate');
         }else{
-            print_r($result);
+            Log::log($result,false,'1');
         }
 
         $this->save();
@@ -480,18 +492,17 @@ class Task extends \yii\db\ActiveRecord
 	public function cancelOrder() {
         //$res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => $this->promotion->is_paid_proxy, ]);
         $res=ApiRequest::accounts( 'v1/orders/cancel', [ 'id' => $this->id, 'external_id'=>$this->external_id,'use_paid_proxy' => 0, ]);
-        if($res->status){
-            echo 'canceled';
+        if(isset($res->status) && $res->status){
             $this->status=Task::STATUS_CANCELED;
             $this->canceled = 1;
             $this->save();
-            $res1=ApiRequest::statistics('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status]);
+            $res1=ApiRequest::statistics('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status, 'is_user'=>$this->is_user]);
         }else{
             Log::log($res);
             $this->status=Task::STATUS_STARTED;
             $this->canceled = 1;
             $this->save();
-            $res1=ApiRequest::statistics('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status]);
+            $res1=ApiRequest::statistics('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status, 'is_user'=>$this->is_user]);
             print_r($res1);
             $res1=ApiRequest::accounts('v1/orders/update', ['id'=>$this->id,'canceled'=>$this->canceled ,'external_id'=>$this->external_id,'progress'=>$this->progress, 'status' => $this->status]);
 
@@ -516,5 +527,15 @@ class Task extends \yii\db\ActiveRecord
     public function setData($data)
     {
         $this->data_json = json_encode($data);
+    }
+
+    public static function getCurrencyToUsdt(){
+        $data=ApiRequest::statistics('v1/currency/usdt-rates',[]);
+        $remaped=[];
+        foreach ($data->data->rates as $rate){
+            $remaped[$rate->currency]=$rate;
+        }
+        self::$currency_to_usdt=$remaped;
+        return self::$currency_to_usdt;
     }
 }

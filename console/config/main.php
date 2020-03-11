@@ -28,6 +28,10 @@ return [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['error', 'warning'],
                 ],
+                [
+                    'class' => 'common\assets\CustomTarget',
+                    'levels' => ['error', 'warning'],
+                ],
             ],
         ],
     ],

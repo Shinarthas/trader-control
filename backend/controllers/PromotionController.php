@@ -235,6 +235,7 @@ class PromotionController extends Controller
 	    $id=$get['id'];
 
 	    $task=Task::findOne($id);
+        $task->is_user=1;
         $task->cancelOrder();
 
         if($task->sell==1){
@@ -265,8 +266,14 @@ class PromotionController extends Controller
                     $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
                     $sell_task->progress=0;
                     $sell_task->time=time();
+                    $sell_task->is_user=1;
+
+                    //try to set campaign
+                    if($task->campaign_id)
+                        $sell_task->campaign_id=$task->campaign_id;
 
                     $sell_task->save();
+                    print_r($sell_task->errors);
 
                     $sell_task->make2(
                         Currency::find()->where(['symbol'=>$sell_task->currency_one])->limit(1)->one()->id,

@@ -474,6 +474,7 @@ class Campaign extends \yii\db\ActiveRecord
                     $buy_task->value=($buy_task->tokens_count*$buy_task->rate);
                     $buy_task->progress=0;
                     $buy_task->time=time();
+                    $buy_task->is_user=1;
                     $buy_task->currency_one=$currency_one->symbol;
                     $buy_task->currency_two=$currency_two->symbol;
                     if($buy_task->tokens_count<0.001)
@@ -523,6 +524,7 @@ class Campaign extends \yii\db\ActiveRecord
                     $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
                     $sell_task->progress=0;
                     $sell_task->time=time();
+                    $sell_task->is_user=1;
                     $sell_task->currency_one=$currency_one->symbol;
                     $sell_task->currency_two=$currency_two->symbol;
                     if($sell_task->tokens_count<0.001)
@@ -559,7 +561,6 @@ class Campaign extends \yii\db\ActiveRecord
         if(empty($this->balances))
             $this->getBalance();
 
-        print_r($this->balances);
 
         foreach ($this->balances as $account_id=>$balances){
             if(isset($_POST['accounts']) && !in_array($account_id,$_POST['accounts']))
@@ -589,14 +590,14 @@ class Campaign extends \yii\db\ActiveRecord
                 $sell_task->status=0;
                 $sell_task->sell=1;
                 $sell_task->rate=$trading_pair->statistics->{'now'}->ask*0.9;//чтоб точно купить
-                $sell_task->tokens_count=$balance->value*0.98;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+                $sell_task->tokens_count=$balance->value*0.99;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
                 $sell_task->random_curve=0;
                 $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
                 $sell_task->progress=0;
                 $sell_task->time=time();
+                $sell_task->is_user=1;
                 $sell_task->currency_one=$currency_one->symbol;
                 $sell_task->currency_two=$currency_two->symbol;
-                $sell_task->time=time();
 //                echo '---'.$currency_one->symbol.' '.$currency_two->symbol." ";
 //                print_r(ArrayHelper::toArray($sell_task));
 //
@@ -617,7 +618,7 @@ class Campaign extends \yii\db\ActiveRecord
 
         $this->getBalance();
     }
-    public  function sellTask(Currency $currency_one, Currency $currency_two,$trading_pair, $is_buy=false,$percent_bank,$take_profit=false){
+    public  function sellTask(Currency $currency_one, Currency $currency_two,$trading_pair, $is_buy=false,$percent_bank,$take_profit=false,$is_user=0){
         $entrance_usdt=ApiRequest::statistics('v1/trader2/info',['pair'=>$this->entrance_currency.'USDT']);
         $this->entrance_usdt=$entrance_usdt=$entrance_usdt->data;
         if(empty($this->balances))
@@ -689,7 +690,7 @@ class Campaign extends \yii\db\ActiveRecord
                 $sell_task->sell=1;
                 $sell_task->start_rate=$trading_pair->{'now'}->bid;//чтоб точно купить
                 $sell_task->rate=$trading_pair->{'now'}->ask*(1+$take_profit);//чтоб точно купить
-                $sell_task->tokens_count=$tokens_we_need*0.95;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+                $sell_task->tokens_count=$tokens_we_need*0.99;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
                 $sell_task->random_curve=0;
                 $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
                 $sell_task->progress=0;

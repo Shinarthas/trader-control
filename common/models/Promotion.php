@@ -277,7 +277,7 @@ class Promotion extends \yii\db\ActiveRecord
 	public function checkPrice() {
 
         $res=ApiRequest::statistics('v1/exchange-course/get-course',ArrayHelper::toArray($this));
-		if(!$res->status){
+		if(!$res->status && !empty($res)){
             Log::log($res);
         }
         return $res;
@@ -356,7 +356,8 @@ class Promotion extends \yii\db\ActiveRecord
             'tokens_count' => $tokens_count,
             'promotion_id' => $this->id,
         ]);
-        Log::log($res);
+        if(!empty($res))
+            Log::log($res );
         if(!$res->status)
             return 0;
 

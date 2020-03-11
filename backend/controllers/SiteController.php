@@ -72,7 +72,15 @@ class SiteController extends Controller
             $m[]= $markets[$key]    ;
         }
         $m=array_reverse($m);
-        return $this->render('index', ['markets'=>$m,'accounts'=>$accounts]);
+
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['includes'=>'USDT','limit'=>50]);
+        $trading_pairs_remaped=[];
+        foreach ($trading_pairs->data as $trading_pair){
+            $trading_pairs_remaped[$trading_pair->trading_paid]=$trading_pair;
+        }
+
+
+        return $this->render('index', ['markets'=>$m,'accounts'=>$accounts,'trading_pairs'=>$trading_pairs_remaped]);
     }
 
     /**
