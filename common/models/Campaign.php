@@ -182,6 +182,16 @@ class Campaign extends \yii\db\ActiveRecord
                                 $tokens_count=$balance->value;
                             }
                         }
+                        ApiRequest::statistics('v1/forecast/create',[
+                            'currency_one'=>$currency_one->id,
+                            'currency_two'=>$currency_two->id,
+                            'entry1'=>$trading_pair->statistics->{'now'}->bid*0.995,
+                            'entry2'=>$trading_pair->statistics->{'now'}->bid*1.001,
+                            'exit1'=>$sell_task->rate*0.995,
+                            'exit2'=>$sell_task->rate*1.001,
+                            'stop'=>$trading_pair->statistics->{'now'}->bid*(1-$this->strategy['stop_loss']),
+                            'timeframe'=>$this->timeout
+                        ]);
                         if($tokens_count<0.000001){
                             echo 'skip';
                             continue;

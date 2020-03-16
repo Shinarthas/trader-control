@@ -120,6 +120,23 @@ class SiteController extends Controller
 
         return $this->goHome();
     }
+    public function actionReleases(){
+        $markets=Market::find()->all();
+
+        $markets_remaped=[];
+        foreach ($markets as $market){
+            $markets_remaped[$market->id]=$market;
+        }
+        $forecasts=ApiRequest::statistics('v1/forecast/list',['limit'=>100]);
+        $fakes=ApiRequest::statistics('v1/orders/fake',['limit'=>100]);
+
+
+        return $this->render('releases', [
+            'orders'=>$fakes->data,
+            'markets'=>$markets_remaped,
+            'forecasts'=>$forecasts->data,
+        ]);
+    }
 	
 	public function actionApiChecker() {
 		$responce = '';

@@ -15,7 +15,6 @@ use common\components\ApiRequest;
 
 class TaskController extends AuthApiController
 {
-
 	public function actionUpdate() {
 		$order = Task::findOne($_POST['id']);
 

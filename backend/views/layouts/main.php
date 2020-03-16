@@ -272,6 +272,8 @@ AppAsset::register($this);
 			<a href="/account">Accounts</a>
 			<a href="/currency">Currencies</a>
 			<a href="/reports">Reports</a>
+			<a href="/reports/bot">Bot</a>
+			<a href="/site/releases">Releases</a>
 
             <?php
             $start = date("Y-m-d",strtotime('this week'));

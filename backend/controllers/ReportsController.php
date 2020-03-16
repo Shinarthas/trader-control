@@ -18,6 +18,7 @@ use common\models\PromotionAccount;
 
 class ReportsController extends Controller
 {
+    static $limit=200;
 	public function beforeAction($action)
 	{            
 		if (Yii::$app->user->isGuest) {
@@ -36,8 +37,8 @@ class ReportsController extends Controller
 
 
 	    $fakes=ApiRequest::statistics('v1/orders/fake',['date_start'=>$date_start,'date_end'=>$date_end]);
-	    //print_r(ArrayHelper::toArray($fakes));
-	    //die();
+	    $forecasts=ApiRequest::statistics('v1/forecast/list',['date_start'=>$date_start,'date_end'=>$date_end]);
+
         $markets=Market::find()->all();
 
         $markets_remaped=[];
@@ -48,6 +49,7 @@ class ReportsController extends Controller
             'date_start'=>$date_start,
             'date_end'=>$date_end,
             'orders'=>$fakes->data,
+            'forecasts'=>$forecasts->data,
             'markets'=>$markets_remaped
         ]);
     }
@@ -151,5 +153,22 @@ class ReportsController extends Controller
             'prediction'=>$prediction,
             'pairs'=>$full_info->data
         ]);
+    }
+    public function actionBot(){
+        if (isset($_GET['page']))
+            $page=(int)$_GET['page'];
+        else
+            $page=1;
+
+        $start=($page-1)*self::$limit;
+        $limit=self::$limit;
+        $data=$_GET;
+        $data['type']='bot';
+        $res=ApiRequest::statistics('v1/log/get',$data);
+        $stat=ApiRequest::statistics('v1/forecast/statistics',[]);
+
+        if($res->status){
+            return $this->render('bot', ['logs'=>$res->data->logs,'count'=>$res->data->count, 'statistics'=>$stat->data]);
+        }
     }
 }

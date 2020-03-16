@@ -700,20 +700,20 @@ class Trader2Controller extends Controller
 
      public function actionUsdtWithAll($id){
         $text_info='';
-         ob_start();
+         //ob_start();
 
 	    //отменим все ордер
          $tasks=Task::find()->where(['campaign_id'=>$id])->andWhere(['not in','status',[1,4,5]])->all();
          foreach ($tasks as $task){
              $task->is_user=1;
-             $task->cancelOrder();
+             //$task->cancelOrder();
          }
 	    $campaign=Campaign::findOne($id);
 
          $campaign->getUsdtWithAll();
-         $out1 = ob_get_contents();
-         ob_end_clean();
-         return $this->render("usdt_with_all",['info'=>$out1]);
+         //$out1 = ob_get_contents();
+         //ob_end_clean();
+         //return $this->render("usdt_with_all",['info'=>$out1]);
      }
 
     public function actionUsdtWithEntrance($id){

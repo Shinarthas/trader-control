@@ -22,6 +22,11 @@ $this->registerJsFile(
     </div>
     <div class="col-md-2"><button class="btn btn-primary" onclick="apply()">Apply</button></div>
 </div>
+<pre>
+    <?php
+    print_r($forecasts);
+    ?>
+</pre>
 <div class="row">
     <?php foreach ($orders as $order){ ?>
         <?php $color=$order->profit_based_on_bag_ap>0?'lime':'red'?>

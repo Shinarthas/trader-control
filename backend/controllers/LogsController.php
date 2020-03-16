@@ -37,7 +37,7 @@ class LogsController extends Controller
         $data['limit']=$limit;
         $res=ApiRequest::statistics('v1/log/get',$data);
         if($res->status){
-            return $this->render('index', ['logs'=>$res->data->logs,'count'=>$res->data->count]);
+            return $this->render('bot', ['logs'=>$res->data->logs,'count'=>$res->data->count]);
         }
     }
 }
