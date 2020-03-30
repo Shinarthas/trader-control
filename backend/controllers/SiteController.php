@@ -61,26 +61,20 @@ class SiteController extends Controller
             $col[]= $market->statistics->now->usdt_balance;
         }
 		asort($col);
-		$accounts=Account::find()->all();
-        $accounts=ArrayHelper::toArray($accounts);
-		foreach ($accounts as &$account){
-            $account['balance']= ApiRequest::statistics('v1/account/get-balance-time', ['id'=>$account['id'],'timestamp'=>time()-120]);
+
+		$accounts=ApiRequest::statistics('v1/account/list',['limit'=>2000]);
+        $accounts=ArrayHelper::toArray($accounts->data);
+        foreach ($accounts as &$account){
+            $account['balances']=json_decode($account['balances'],true);
         }
 
-        $m=[];
+		        $m=[];
         foreach ( $col as $key=>$b ) {
             $m[]= $markets[$key]    ;
         }
         $m=array_reverse($m);
 
-        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['includes'=>'USDT','limit'=>50]);
-        $trading_pairs_remaped=[];
-        foreach ($trading_pairs->data as $trading_pair){
-            $trading_pairs_remaped[$trading_pair->trading_paid]=$trading_pair;
-        }
-
-
-        return $this->render('index', ['markets'=>$m,'accounts'=>$accounts,'trading_pairs'=>$trading_pairs_remaped]);
+        return $this->render('index', ['markets'=>$m,'accounts'=>$accounts]);
     }
 
     /**

@@ -272,7 +272,7 @@ AppAsset::register($this);
 			<a href="/account">Accounts</a>
 			<a href="/currency">Currencies</a>
 			<a href="/reports">Reports</a>
-			<a href="/reports/bot">Bot</a>
+
 			<a href="/site/releases">Releases</a>
 
             <?php
@@ -284,7 +284,8 @@ AppAsset::register($this);
 			<a>Settings</a>
 			<a>Help</a>
 			<a>My profile</a>-->
-			
+            <a href="/reports/bot">Bot</a>
+            <a href="/reports/bot2">Bot2</a>
 			<br>
 
 		</div>

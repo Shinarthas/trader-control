@@ -24,6 +24,10 @@ class TaskController extends AuthApiController
             $order->value=$_POST['tokens_count']*$_POST['rate'];
             $order->time=$_POST['created_at'];
             $order->id=$_POST['id'];
+            if(isset($_POST['external_id'])){
+                $order->external_id=$_POST['external_id'];
+            }
+
 
             //нужно найти кому он пренадлежит;
             $campaigns=Campaign::find()->all();

@@ -48,6 +48,7 @@ return [
 				'/<controller>/<id:\d+>' => '<controller>/view',
 				'/<controller>/<id:\d+>/<action>' => '<controller>/<action>',
 				'/reports/pair/<symbol:>' => 'reports/pair',
+				'/reports/forecast/<symbol:>' => 'reports/forecast',
             ],
         ],
     ],

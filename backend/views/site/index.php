@@ -385,29 +385,27 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         var acc_value={};
         for (var i=0;i<accounts.length;i++ ){
             if([1,2].includes(accounts[i].type)) continue;
-            for (var j=0; j<accounts[i].balance.data.balances.length;j++) {
-
-                if(trading_pairs[accounts[i].balance.data.balances[j].name+'USDT']!= undefined){
-                    if(typeof acc_value[accounts[i].balance.data.balances[j].name] =='undefined'){
-                        if((accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                            *trading_pairs[accounts[i].balance.data.balances[j].name+'USDT'].bid>1)
-                        acc_value[accounts[i].balance.data.balances[j].name]=(accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                            *trading_pairs[accounts[i].balance.data.balances[j].name+'USDT'].bid
+            for (var j=0; j<accounts[i].balances[accounts[i].balances.length-1].balances.length;j++) {
+                if(accounts[i].balances[accounts[i].balances.length-1].balances[j]==undefined)
+                    continue;
+                if(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate!= undefined){
+                    if(typeof acc_value[accounts[i].balances[accounts[i].balances.length-1].balances[j].name] =='undefined'){
+                        if((parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value)
+                            +parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value_in_orders))
+                            *parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate)>1)
+                        acc_value[accounts[i].balances[accounts[i].balances.length-1].balances[j].name]=(
+                            parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value)
+                            +parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value_in_orders))
+                            *parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate)
                     }else{
-                        if((accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                            *trading_pairs[accounts[i].balance.data.balances[j].name+'USDT'].bid>1)
-                        acc_value[accounts[i].balance.data.balances[j].name]+=(accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                            *trading_pairs[accounts[i].balance.data.balances[j].name+'USDT'].bid
+                        if((parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value)
+                            +parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value_in_orders))
+                            *parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate)>1)
+                        acc_value[accounts[i].balances[accounts[i].balances.length-1].balances[j].name]+=(
+                            parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value)
+                            +parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value_in_orders))
+                            *parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate)
                     }
-                }else if(accounts[i].balance.data.balances[j].name=='USDT'){
-                    if(typeof acc_value[accounts[i].balance.data.balances[j].name] =='undefined'){
-                        acc_value[accounts[i].balance.data.balances[j].name]=(accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                    }else{
-
-                        acc_value[accounts[i].balance.data.balances[j].name]+=(accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                    }
-                }else{
-                    console.log(accounts[i].balance.data.balances[j].name+'USDT') ;
                 }
             }
         }
@@ -436,29 +434,25 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         var acc_value2={};
         for (var i=0;i<accounts.length;i++ ){
              if(![1,2].includes(accounts[i].type)) continue;
-            for (var j=0; j<accounts[i].balance.data.balances.length;j++) {
-
-                if(trading_pairs[accounts[i].balance.data.balances[j].name+'USDT']!= undefined){
-                    if(typeof acc_value2[accounts[i].balance.data.balances[j].name] =='undefined'){
-                        if((accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                            *trading_pairs[accounts[i].balance.data.balances[j].name+'USDT'].bid>1)
-                            acc_value2[accounts[i].balance.data.balances[j].name]=(accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                                *trading_pairs[accounts[i].balance.data.balances[j].name+'USDT'].bid
-                    }else{
-                        if((accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                            *trading_pairs[accounts[i].balance.data.balances[j].name+'USDT'].bid>1)
-                            acc_value2[accounts[i].balance.data.balances[j].name]+=(accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                                *trading_pairs[accounts[i].balance.data.balances[j].name+'USDT'].bid
-                    }
-                }else if(accounts[i].balance.data.balances[j].name=='USDT'){
-                    if(typeof acc_value2[accounts[i].balance.data.balances[j].name] =='undefined'){
-                        acc_value2[accounts[i].balance.data.balances[j].name]=(accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                    }else{
-
-                        acc_value2[accounts[i].balance.data.balances[j].name]+=(accounts[i].balance.data.balances[j].value+accounts[i].balance.data.balances[j].value_in_orders)
-                    }
+            for (var j=0; j<accounts[i].balances[accounts[i].balances.length-1].balances.length;j++) {
+                if(accounts[i].balances[accounts[i].balances.length-1].balances[j]==undefined)
+                    continue;
+                if(typeof acc_value[accounts[i].balances[accounts[i].balances.length-1].balances[j].name] =='undefined'){
+                    if((parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value)
+                        +parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value_in_orders))
+                        *parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate)>1)
+                        acc_value[accounts[i].balances[accounts[i].balances.length-1].balances[j].name]=(
+                            parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value)
+                            +parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value_in_orders))
+                            *parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate)
                 }else{
-                    console.log(accounts[i].balance.data.balances[j].name+'USDT') ;
+                    if((parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value)
+                        +parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value_in_orders))
+                        *parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate)>1)
+                        acc_value[accounts[i].balances[accounts[i].balances.length-1].balances[j].name]+=(
+                            parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value)
+                            +parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].value_in_orders))
+                            *parseFloat(accounts[i].balances[accounts[i].balances.length-1].balances[j].rate)
                 }
             }
         }

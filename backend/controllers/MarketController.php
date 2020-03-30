@@ -29,14 +29,10 @@ class MarketController extends Controller
     public function actionView($id)
     {
 		$market = Market::find()->where(['id'=>$id])->limit(1)->one();
-		$accounts=Account::find()->where(['type'=>$market->id])->all();
-		$accounts=ArrayHelper::toArray($accounts);
-		foreach ($accounts as &$account){
-
-            $date=time();
-            for($i=$date-24*3600;$i<=$date+10;$i+=3600){
-                $account['balances'][]= ApiRequest::statistics('v1/account/get-balance-time', ['id'=>$account['id'],'timestamp'=>$i]);
-            }
+        $accounts=ApiRequest::statistics('v1/account/list',['type'=>$market->id,'limit'=>2000]);
+        $accounts=ArrayHelper::toArray($accounts->data);
+        foreach ($accounts as &$account){
+            $account['balances']=json_decode($account['balances'],true);
         }
 		$acc_ids=[];
 		foreach ($accounts as $a)
@@ -47,14 +43,8 @@ class MarketController extends Controller
             ->limit(100)->all();
 		//print_r(ArrayHelper::toArray())
 
-        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['includes'=>'USDT','limit'=>50]);
-        $trading_pairs_remaped=[];
-        foreach ($trading_pairs->data as $trading_pair){
-            $trading_pairs_remaped[$trading_pair->trading_paid]=$trading_pair;
-        }
 
-
-        return $this->render('view', ['market'=>$market,'accounts'=>$accounts,'orders'=>$orders,'trading_pairs'=>$trading_pairs_remaped]);
+        return $this->render('view', ['market'=>$market,'accounts'=>$accounts,'orders'=>$orders]);
     }
 	
 	public function actionCampaign() {

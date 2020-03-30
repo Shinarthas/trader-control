@@ -8,6 +8,7 @@ use common\assets\CoinMarketCapApi;
 use common\components\ApiRequest;
 use common\models\Account;
 use common\models\Campaign;
+use common\models\Currency;
 use common\models\CurrencyPrice;
 use common\models\Trading;
 use Yii;
@@ -125,6 +126,37 @@ class TestController extends Controller
     }
     public function actionUsdtRates(){
 	    print_r(Task::getCurrencyToUsdt());
+    }
+    public function actionFix(){
+        $pairs=ApiRequest::statistics('v1/trader2/list',['limit'=>500,'includes'=>'BTC','last'=>'BTC']);
+        $pairs=$pairs->data;
+        foreach ($pairs as $trading_pair){
+            $symbol=str_replace('BTC','',$trading_pair->trading_paid);
+            $currency=Currency::find()->where(['symbol'=>$symbol])->limit(1)->one();
+            if(empty($currency)){
+                $currency=new Currency();
+                $currency->created_at=time();
+
+                $currency['name']=$symbol;
+                $currency['symbol']=$symbol;
+                $currency['decimals']=6;
+                $currency['type']=1;
+                $currency['address']='0x';
+                $currency['class']='GoodCurrency';
+                $currency['data']=[];
+                $currency->save();
+                if(!$currency->errors){
+                    $currencyArray=ArrayHelper::toArray($currency);
+                    $result = ApiRequest::statistics('v1/currency/add',$currencyArray);
+                    if($result->status!=1)
+                        $errors[]=$result;
+
+                    $result = ApiRequest::accounts('v1/currency/add',$currencyArray);
+                    if($result->status!=1)
+                        $errors[]=$result;
+                }
+            }
+        }
     }
 
 }

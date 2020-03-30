@@ -38,7 +38,15 @@ class Trader2Controller extends Controller
 	}
 
 	public function actionIndex(){
-	    $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'limit'=>10]);
+        $currency_to_usdt=ApiRequest::statistics('v1/currency/usdt-rates');
+        $currency_to_usdt_remapped=[];
+        foreach ($currency_to_usdt->data->rates as $usdt_rate){
+            $currency_to_usdt_remapped[$usdt_rate->currency]=$usdt_rate;
+        }
+
+
+        $time_start = microtime(true);
+        $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'limit'=>10]);
         $trading_pairs=$trading_pairs->data;
         $period=Trading::getPeriod();
 
@@ -52,6 +60,9 @@ class Trader2Controller extends Controller
         foreach ($trading_pairs as $trading_pair){
             $trading_pairs_remapped[$trading_pair->trading_paid]=$trading_pair;
         }
+        $time_end = microtime(true);
+        $execution_time = ($time_end - $time_start);
+        //echo $execution_time; die();
         //фунуионал статистики по ордерам
         $time=time();
         $orders=$tasks=Task::find()->where(['>','time',time()-7*24*3600])->andWhere(['<>','status',1])->all();
@@ -234,6 +245,7 @@ class Trader2Controller extends Controller
         }
 
 
+
 	   $Companies=Campaign::find()->all();
         return $this->render("index", [
             'companies' => $Companies,
@@ -244,6 +256,7 @@ class Trader2Controller extends Controller
             'order_statistics'=>$order_statistics,
             'balance_statistics'=>$balance_statistics,
             'profit_statistics'=>$profit_statistics,
+            'usdt_rates'=>$currency_to_usdt_remapped,
         ]);
     }
 
@@ -706,7 +719,7 @@ class Trader2Controller extends Controller
          $tasks=Task::find()->where(['campaign_id'=>$id])->andWhere(['not in','status',[1,4,5]])->all();
          foreach ($tasks as $task){
              $task->is_user=1;
-             //$task->cancelOrder();
+             $task->cancelOrder();
          }
 	    $campaign=Campaign::findOne($id);
 

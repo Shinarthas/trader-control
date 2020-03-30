@@ -32,7 +32,7 @@ if($order->start_rate){
 }
 ?>
 
-<div class="panel panel-default">
+<div class="panel panel-default" data_id="<?= $forecast->id ?>">
     <div class="panel-heading">
         <div class="row">
             <div class="col-xs-7 "><?= $forecast->symbol ?> </div>
@@ -51,6 +51,11 @@ if($order->start_rate){
         </div>
     </div>
     <div class="panel-body">
+
+        <div class="col-xs-7">Date Planed:</div>
+        <div class="col-xs-5"><?= $forecast->created_at?></div>
+
+        <hr/>
         <p>
         <div class="col-xs-7">Entry1:</div>
         <div class="col-xs-5"><?= number_format($forecast->entry1,6)?></div>
@@ -73,30 +78,49 @@ if($order->start_rate){
         </p>
         <p>
         <div class="col-xs-7">Timeframe:</div>
-        <div class="col-xs-5"><?= number_format($order->timeframe,6)?></div>
+
+        <div class="col-xs-5"><?= intval($forecast->timeframe/3600)?>h</div>
         </p>
-        <?php if($forecast->status==2){ ?>
+        <br/>
+        <hr/>
+        <?php if($forecast->status==1){ ?>
+            <p>
+            <div class="col-xs-7">Date Started:</div>
+            <div class="col-xs-5"><?= $forecast->started_at?></div>
+            </p>
+
+            <p>
+            <div class="col-xs-7">Rate Start:</div>
+            <div class="col-xs-5"><?= number_format($forecast->rate_start,10)?></div>
+            </p>
+
+
 
         <?php } ?>
-        <p>
-        <div class="col-xs-7">Fee:</div>
-        <div class="col-xs-5"><?= number_format($order->usd_value/100*0.2,2)?></div>
-        </p>
-        <p>
-        <div class="col-xs-7">Average Rate:</div>
-        <div class="col-xs-5"><?= number_format(($order->start_rate+$order->rate)/2,4)?><?= $icon ?></div>
-        </p>
-        <p>
-        <div class="col-xs-7">Historical profit:</div>
-        <div class="col-xs-5">???AA</div>
-        </p>
-        <p>
-        <div class="col-xs-7">Profit Based on Bag AR:</div>
-        <?php
-        $avg_rate=$order->sell?$order->rate/(($order->start_rate+$order->rate)/2):$order->start_rate/(($order->start_rate+$order->rate)/2);
-        ?>
-        <div class="col-xs-5"><?= number_format($avg_rate*$order->profit_based_on_bag_ap,2) ?></div>
-        </p>
+        <?php if($forecast->status==2){ ?>
+            <p>
+            <div class="col-xs-7">Date Started:</div>
+            <div class="col-xs-5"><?= $forecast->started_at?></div>
+            </p>
+            <p>
+            <div class="col-xs-7">Rate Start:</div>
+            <div class="col-xs-5"><?= number_format($forecast->rate_start,10)?></div>
+            </p>
+
+
+            <p>
+            <div class="col-xs-7">Date Finished:</div>
+            <div class="col-xs-5"><?= $forecast->finished_at?></div>
+            </p>
+            <p>
+            <div class="col-xs-7">Rate End:</div>
+            <div class="col-xs-5"><?= number_format($forecast->rate_end,10)?></div>
+            </p>
+
+        <?php } ?>
+        <hr/>
+        <br/>
+
         <p>
             <div class="dropdown">
                 <div class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -105,16 +129,36 @@ if($order->start_rate){
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                     <p>
                     <div class="col-xs-6">Date:</div>
-                    <div class="col-xs-6"><?= date('Y-m-d H:i',$order->created_at)?> - <?= date('Y-m-d H:i',$order->closed_at)?></div>
+                    <div class="col-xs-6"><?= $forecast->created_at?> - <?= $forecast->fnished_at?></div>
                     </p>
                     <p>
                     <div class="col-xs-6">Rates:</div>
-                    <div class="col-xs-6"><?= number_format($order->start_rate,4)?> - <?= number_format($order->rate,4)?> <?= $icon ?></div>
+                    <div class="col-xs-6"><?= number_format($forecast->start_rate,4)?> - <?= number_format($forecast->rate,4)?> <?= $icon ?></div>
                     </p>
                 </div>
             </div>
+        </p>
     </div>
-    <div class="panel-footer">Profit: <span style="color:<?=$color?>;"><?= number_format($order->profit_based_on_bag_ap,2)?>$</span> (<?= number_format($order->profit_based_on_bag_ap/$order->usd_value,2)?>%)</div>
+    <div class="panel-footer"></span>
+        <div class="row">
+            <div class="col-xs-7 ">Profit: <span style="color:<?=$color?>;"><?= number_format($forecast->result*100,2)?>%</div>
+            <div class="col-xs-5 text-right">
+                <?php
+                if(is_null($forecast->started_at)){
+                    echo "<b style='color: yellow'>Condition not triggered</b>" ;
+                }else{
+                    if($forecast->to_show==1)
+                        echo "<b style='color: lime'>Triggered</b>" ;
+                    if($forecast->to_show==0)
+                        echo "<b style='color: RED'>Aborted</b>" ;
+                }
+
+                ?>
+            </div>
+        </div>
+
+
+    </div>
 </div>
 
 

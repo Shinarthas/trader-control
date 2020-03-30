@@ -71,6 +71,7 @@ class ReportsController extends Controller
         return $pairs->data;
     }
     public function actionPrediction(){
+        ini_set("memory_limit", "512M");
 	    $symbols_info=ApiRequest::statistics('v1/trader2/list',['last'=>'BTC']);
         $remaped=[];
         foreach ($symbols_info->data as $trading_pair){
@@ -81,8 +82,6 @@ class ReportsController extends Controller
         $statistics=[];
 
 	    $time=time();
-
-
 
 	    foreach ($data->data as $stat){
 	        if(strtotime($stat->timestamp_start)<$time-7*24*3600)
@@ -165,10 +164,29 @@ class ReportsController extends Controller
         $data=$_GET;
         $data['type']='bot';
         $res=ApiRequest::statistics('v1/log/get',$data);
-        $stat=ApiRequest::statistics('v1/forecast/statistics',[]);
 
         if($res->status){
-            return $this->render('bot', ['logs'=>$res->data->logs,'count'=>$res->data->count, 'statistics'=>$stat->data]);
+            return $this->render('bot', ['logs'=>$res->data->logs,'count'=>$res->data->count]);
         }
+    }
+    public function actionBot2(){
+        if (isset($_GET['page']))
+            $page=(int)$_GET['page'];
+        else
+            $page=1;
+
+        $start=($page-1)*self::$limit;
+        $limit=self::$limit;
+        $data=$_GET;
+        $stat=ApiRequest::statistics('v1/forecast/statistics',[]);
+
+        if($stat->status){
+            return $this->render('bot2', ['statistics'=>$stat->data]);
+        }
+    }
+    public function actionForecast($symbol){
+        $forecasts=ApiRequest::statistics('v1/forecast/list',['symbol'=>$symbol]);
+
+        return $this->render('forecast', ['forecasts'=>$forecasts->data]);
     }
 }
