@@ -273,6 +273,8 @@ AppAsset::register($this);
 			<a href="/currency">Currencies</a>
 			<a href="/reports">Reports</a>
 
+			<a href="/site/releases">Releases</a>
+
             <?php
             $start = date("Y-m-d",strtotime('this week'));
             $end=date("Y-m-d",strtotime('this week')+3600*14*7);
@@ -282,7 +284,8 @@ AppAsset::register($this);
 			<a>Settings</a>
 			<a>Help</a>
 			<a>My profile</a>-->
-			
+            <a href="/reports/bot">Bot</a>
+            <a href="/reports/bot2">Bot2</a>
 			<br>
 
 		</div>

@@ -22,7 +22,8 @@ use common\components\ApiRequest;
                             </div>
 
                         </div>
-                        <div class="panel-footer">Total: <span class="total">$<?php echo number_format($account['balances'][count($account['balances'])-1]->data->in_usd,2) ?></span></div>
+
+                        <div class="panel-footer">Total: <span class="total">$<?php echo number_format($account['balances'][count($account['balances'])-1]['total'],2) ?></span></div>
                     </div>
                 </div>
             <?php $index++;?>
@@ -174,7 +175,7 @@ use common\components\ApiRequest;
         XRP: "#5494ff",
         XMR: "#ff7a39",
     };
-    var trading_pairs=<?php echo json_encode($trading_pairs); ?>;
+
     var accounts=<?= json_encode($accounts)?>;
     window.onload = function () {
         $( ".chart1" ).each(function( index ) {
@@ -187,9 +188,10 @@ use common\components\ApiRequest;
             var  labels=[];
 
             for(var i=0;i<accounts[inder_index].balances.length;i++){
-                if(accounts[inder_index].balances[1].data!=undefined){
-                    balances.push(accounts[inder_index].balances[i].data.in_usd)
-                    labels.push(dateFormat('m/d H:i',new Date(accounts[inder_index].balances[i].data.balances[0].timestamp*1000)))
+
+                if(accounts[inder_index].balances[i].total!=undefined){
+                    balances.push(accounts[inder_index].balances[i].total)
+                    labels.push(dateFormat('m/d H:i',new Date(accounts[inder_index].balances[i].date)))
                 }
 
                 else{
@@ -243,20 +245,21 @@ use common\components\ApiRequest;
 
             var in_usd=[];
             var ms=[];
-            var tmpData=accounts[inder_index].balances[accounts[inder_index].balances.length-1].data;
+            var tmpData=accounts[inder_index].balances[accounts[inder_index].balances.length-1];
             console.log(tmpData);
             if(tmpData!=undefined){
                 for(var i=0;i<tmpData.balances.length;i++){
-                    if(trading_pairs[tmpData.balances[i].name+'USDT']!= undefined) {
-                        if((tmpData.balances[i].value + tmpData.balances[i].value_in_orders)
-                            *trading_pairs[tmpData.balances[i].name+'USDT'].bid>1){
+                    if(tmpData.balances[i]==undefined)
+                        continue;
+                    if(typeof tmpData.balances[i].name !='undefined'){
+                        if((parseFloat(tmpData.balances[i].value)
+                            +parseFloat(tmpData.balances[i].value_in_orders))
+                            *parseFloat(tmpData.balances[i].rate)>1){
                             ms.push(tmpData.balances[i].name);
-                            in_usd.push((tmpData.balances[i].value + tmpData.balances[i].value_in_orders)*trading_pairs[tmpData.balances[i].name+'USDT'].bid)
-                        }  
-                    }else if(tmpData.balances[i].name == 'USDT' || tmpData.balances[i].name=='USD'){
-                        if(tmpData.balances[i].value + tmpData.balances[i].value_in_orders>1){
-                            ms.push(tmpData.balances[i].name);
-                            in_usd.push((tmpData.balances[i].value + tmpData.balances[i].value_in_orders));
+                            in_usd.push((
+                                parseFloat(tmpData.balances[i].value)
+                                    +parseFloat(tmpData.balances[i].value_in_orders))
+                                    *parseFloat(tmpData.balances[i].rate));
                         }
 
                     }

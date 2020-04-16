@@ -69,6 +69,12 @@ class Campaign extends \yii\db\ActiveRecord
     private function trade(){
         if(empty($this->balances))
             $this->getBalance();
+        $currency_to_usdt=ApiRequest::statistics('v1/currency/usdt-rates');
+        $usdt_rates=[];
+        foreach ($currency_to_usdt->data->rates as $usdt_rate){
+            $usdt_rates[$usdt_rate->currency]=$usdt_rate;
+        }
+
         //сколько у нас той валюты через которую хотим заходить
         $entrance_value=0;
 
@@ -123,6 +129,9 @@ class Campaign extends \yii\db\ActiveRecord
                         $buy_task->value=($buy_task->tokens_count*$buy_task->rate);
                         $buy_task->progress=0;
                         $buy_task->time=time();
+                        //если тотал ордера меньше доллара то не допускать
+                        if(isset($usdt_rates[$currency_one->id]) && $usdt_rates[$currency_one->id]->rate*$buy_task->tokens_count<1)
+                            continue;
 
                         //если ставка меньше  $1.5, то не ставить ордер
                         if($buy_task->tokens_count*$buy_task->rate*$this->entrance_usdt->{'now'}->bid<1.5)
@@ -182,6 +191,19 @@ class Campaign extends \yii\db\ActiveRecord
                                 $tokens_count=$balance->value;
                             }
                         }
+                        //если тотал ордера меньше доллара то не допускать
+                        if(isset($usdt_rates[$currency_one->id]) && $usdt_rates[$currency_one->id]->rate*$sell_task->tokens_count<1)
+                            continue;
+//                        ApiRequest::statistics('v1/forecast/create',[
+//                            'currency_one'=>$currency_one->id,
+//                            'currency_two'=>$currency_two->id,
+//                            'entry1'=>$trading_pair->statistics->{'now'}->bid*0.995,
+//                            'entry2'=>$trading_pair->statistics->{'now'}->bid*1.001,
+//                            'exit1'=>$sell_task->rate*0.995,
+//                            'exit2'=>$sell_task->rate*1.001,
+//                            'stop'=>$trading_pair->statistics->{'now'}->bid*(1-$this->strategy['stop_loss']),
+//                            'timeframe'=>$this->timeout
+//                        ]);
                         if($tokens_count<0.000001){
                             echo 'skip';
                             continue;
@@ -469,7 +491,7 @@ class Campaign extends \yii\db\ActiveRecord
                     $buy_task->status=0;
                     $buy_task->sell=0;
                     $buy_task->rate=$this->entrance_usdt->{'now'}->bid*1.005;//чтоб точно купить
-                    $buy_task->tokens_count=$balance->value/$buy_task->rate*0.98;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+                    $buy_task->tokens_count=$balance->value/$buy_task->rate*0.998;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
                     $buy_task->random_curve=0;
                     $buy_task->value=($buy_task->tokens_count*$buy_task->rate);
                     $buy_task->progress=0;
@@ -527,6 +549,7 @@ class Campaign extends \yii\db\ActiveRecord
                     $sell_task->is_user=1;
                     $sell_task->currency_one=$currency_one->symbol;
                     $sell_task->currency_two=$currency_two->symbol;
+
                     if($sell_task->tokens_count<0.001)
                         continue;
                     $sell_task->save();
@@ -542,7 +565,11 @@ class Campaign extends \yii\db\ActiveRecord
         $trading_pairs=ApiRequest::statistics('v1/trader2/list',['includes'=>'USDT','limit'=>999]);
 
         $trading_pairs=$trading_pairs->data;
-
+        $currency_to_usdt=ApiRequest::statistics('v1/currency/usdt-rates');
+        $usdt_rates=[];
+        foreach ($currency_to_usdt->data->rates as $usdt_rate){
+            $usdt_rates[$usdt_rate->currency]=$usdt_rate;
+        }
 
         foreach ($trading_pairs as $trading_pair){
             $tmp=ApiRequest::statistics('v1/trader2/info',['pair'=>$trading_pair->trading_paid]);
@@ -590,7 +617,7 @@ class Campaign extends \yii\db\ActiveRecord
                 $sell_task->status=0;
                 $sell_task->sell=1;
                 $sell_task->rate=$trading_pair->statistics->{'now'}->ask*0.9;//чтоб точно купить
-                $sell_task->tokens_count=$balance->value*0.99;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
+                $sell_task->tokens_count=$balance->value;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
                 $sell_task->random_curve=0;
                 $sell_task->value=($sell_task->tokens_count*$sell_task->rate);
                 $sell_task->progress=0;
@@ -598,6 +625,14 @@ class Campaign extends \yii\db\ActiveRecord
                 $sell_task->is_user=1;
                 $sell_task->currency_one=$currency_one->symbol;
                 $sell_task->currency_two=$currency_two->symbol;
+                //если тотал ордера меньше доллара то не допускать
+                if(isset($usdt_rates[$currency_one->id]) && $usdt_rates[$currency_one->id]->rate*$sell_task->tokens_count<1){
+                    echo "(".$currency_one->symbol.$currency_two->symbol." ".$sell_task->tokens_count." ".($usdt_rates[$currency_one->id]->rate*$sell_task->tokens_count).")";
+                    continue;
+                }
+                else{
+                    echo "(".$currency_one->symbol.$currency_two->symbol." ".($usdt_rates[$currency_one->id]->rate*$sell_task->tokens_count).")";
+                }
 //                echo '---'.$currency_one->symbol.' '.$currency_two->symbol." ";
 //                print_r(ArrayHelper::toArray($sell_task));
 //
@@ -649,7 +684,7 @@ class Campaign extends \yii\db\ActiveRecord
                         $buy_task->sell=0;
                         $buy_task->currency_one=$currency_one->symbol;
                         $buy_task->currency_two=$currency_two->symbol;
-                        $buy_task->rate=$trading_pair->{'now'}->bid*1.005;//чтоб точно купить
+                        $buy_task->rate=$trading_pair->{'now'}->bid*1.05;//чтоб точно купить
                         $buy_task->start_rate=$trading_pair->{'now'}->bid;//чтоб точно купить
                         $buy_task->tokens_count=$tokens_we_need-$balance->value;//посчитал по цене покупки чтоб не пролететь по минималкам и комиссиям
                         $buy_task->random_curve=0;

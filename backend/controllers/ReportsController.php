@@ -18,6 +18,7 @@ use common\models\PromotionAccount;
 
 class ReportsController extends Controller
 {
+    static $limit=200;
 	public function beforeAction($action)
 	{            
 		if (Yii::$app->user->isGuest) {
@@ -36,8 +37,8 @@ class ReportsController extends Controller
 
 
 	    $fakes=ApiRequest::statistics('v1/orders/fake',['date_start'=>$date_start,'date_end'=>$date_end]);
-	    //print_r(ArrayHelper::toArray($fakes));
-	    //die();
+	    $forecasts=ApiRequest::statistics('v1/forecast/list',['date_start'=>$date_start,'date_end'=>$date_end]);
+
         $markets=Market::find()->all();
 
         $markets_remaped=[];
@@ -48,6 +49,7 @@ class ReportsController extends Controller
             'date_start'=>$date_start,
             'date_end'=>$date_end,
             'orders'=>$fakes->data,
+            'forecasts'=>$forecasts->data,
             'markets'=>$markets_remaped
         ]);
     }
@@ -69,6 +71,7 @@ class ReportsController extends Controller
         return $pairs->data;
     }
     public function actionPrediction(){
+        ini_set("memory_limit", "512M");
 	    $symbols_info=ApiRequest::statistics('v1/trader2/list',['last'=>'BTC']);
         $remaped=[];
         foreach ($symbols_info->data as $trading_pair){
@@ -79,8 +82,6 @@ class ReportsController extends Controller
         $statistics=[];
 
 	    $time=time();
-
-
 
 	    foreach ($data->data as $stat){
 	        if(strtotime($stat->timestamp_start)<$time-7*24*3600)
@@ -151,5 +152,41 @@ class ReportsController extends Controller
             'prediction'=>$prediction,
             'pairs'=>$full_info->data
         ]);
+    }
+    public function actionBot(){
+        if (isset($_GET['page']))
+            $page=(int)$_GET['page'];
+        else
+            $page=1;
+
+        $start=($page-1)*self::$limit;
+        $limit=self::$limit;
+        $data=$_GET;
+        $data['type']='bot';
+        $res=ApiRequest::statistics('v1/log/get',$data);
+
+        if($res->status){
+            return $this->render('bot', ['logs'=>$res->data->logs,'count'=>$res->data->count]);
+        }
+    }
+    public function actionBot2(){
+        if (isset($_GET['page']))
+            $page=(int)$_GET['page'];
+        else
+            $page=1;
+
+        $start=($page-1)*self::$limit;
+        $limit=self::$limit;
+        $data=$_GET;
+        $stat=ApiRequest::statistics('v1/forecast/statistics',[]);
+
+        if($stat->status){
+            return $this->render('bot2', ['statistics'=>$stat->data]);
+        }
+    }
+    public function actionForecast($symbol){
+        $forecasts=ApiRequest::statistics('v1/forecast/list',['symbol'=>$symbol]);
+
+        return $this->render('forecast', ['forecasts'=>$forecasts->data]);
     }
 }

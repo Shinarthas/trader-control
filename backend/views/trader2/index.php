@@ -196,10 +196,10 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                                     <div class="panel-body">
                                         <?php foreach($bb->balances as $b){ ?>
                                             <?php if($b->name=='USDT'){ ?>
-                                                <p><img src="http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/32/Tether-USDT-icon.png"> <?= number_format($b->value,2) ?> (<?= number_format($b->value_in_orders,2) ?>)</p>
+                                                <p><img src="http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/16/Tether-USDT-icon.png"> <?= number_format($b->value,2) ?> (<?= number_format($b->value_in_orders,2) ?>)</p>
                                             <?php } ?>
                                             <?php if($b->name=='BTC'){ ?>
-                                                <p><img src="http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/32/Bitcoin-Plus-XBC-icon.png"><?= number_format($b->value,4) ?> (<?= number_format($b->value_in_orders,4) ?>)</p>
+                                                <p><img src="http://icons.iconarchive.com/icons/cjdowner/cryptocurrency-flat/16/Bitcoin-Plus-XBC-icon.png"><?= number_format($b->value,4) ?> (<?= number_format($b->value_in_orders,4) ?>)</p>
                                             <?php } ?>
                                         <?php } ?>
 
@@ -210,7 +210,11 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                                         </div>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
                                             <?php foreach($bb->balances as $b){ ?>
-                                                    <p  class="dropdown-item" ><?=$b->name ?> <?= number_format($b->value,2) ?> (<?= number_format($b->value_in_orders,2) ?>)</p>
+                                                <?php
+                                                if(isset($usdt_rates[$b->currency_id]) && $usdt_rates[$b->currency_id]->rate*($b->value+$b->value_in_orders)>1)
+                                                {?>
+                                                    <p  class="dropdown-item" ><?=$b->name ?> <?= number_format($b->value,2) ?> (<?= number_format($b->value_in_orders,2) ?>) $<?=number_format($usdt_rates[$b->currency_id]->rate*($b->value+$b->value_in_orders),2)?></p>
+                                                    <?php } ?>
                                             <?php } ?>
                                         </div>
                                     </div>
