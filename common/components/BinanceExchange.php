@@ -83,6 +83,51 @@ class BinanceExchange {
         $response = $api->cancel("ETHBTC", $order->market_order_id);
 	    return $response;
 	}
+	
+	public static function getDepth($currency_one, $currency_two) {
+
+	    $api = new BinanceApi();
+		$cache = \Yii::$app->cache;
+		$currency_id = $cache->get("currency_id_".$currency_two->symbol.$currency_one->symbol);
+		if($currency_id == 0)
+			$cache->set("currency_id_".$currency_two->symbol.$currency_one->symbol, $currency_two->id);
+			
+		$api->depthCache([$currency_two->symbol.$currency_one->symbol], function($api, $symbol, $depth) {
+
+				$cache = \Yii::$app->cache;
+				$current_currency_to_buy = $cache->get("current_currency_to_buy");
+				$currency_id = $cache->get("currency_id_".$symbol);
+				
+				if($current_currency_to_buy != $currency_id AND $current_currency_to_buy!=null)
+					return false;
+				
+				$prediction = Diviner::depthPrediction($depth['asks'], $depth['bids'], $symbol, $currency_id);
+
+				$limit = 11;
+				$sorted = $api->sortDepth($symbol, $limit);
+				
+				if($prediction['prediction'] > 64 AND $current_currency_to_buy == 0) {
+					// store currenct currency as currency in buy
+					$cache->set("current_currency_to_buy", $currency_id);
+										
+					// purchase currency by id $currency_id;
+					// code of purchs must be here
+				}
+				
+				if($prediction['prediction'] < 50 AND $current_currency_to_buy == $currency_id) {
+					// sell currency by id $currency_id
+					// code of sell must be here
+					
+					// and after this - clear cache data
+					$cache->set("current_currency_to_buy", 0);
+				}
+				
+				if(date("s",time())==59) {
+					$endpoint = strtolower( $symbol ) . '@depthCache';
+					$api->terminate( $endpoint );
+				}
+		});
+	}
 }
 
 
