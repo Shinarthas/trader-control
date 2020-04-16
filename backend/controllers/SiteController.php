@@ -211,4 +211,8 @@ class SiteController extends Controller
 		exit();
 	//	return $this->render("test");
 	}
+	
+	public function actionStatistic() {
+		return $this->render("statistic");
+	}
 }

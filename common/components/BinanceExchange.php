@@ -83,6 +83,61 @@ class BinanceExchange {
         $response = $api->cancel("ETHBTC", $order->market_order_id);
 	    return $response;
 	}
+	
+	public static function getDepth($currency_one, $currency_two) {
+
+	    $api = new BinanceApi();
+		$cache = \Yii::$app->cache;
+		$currency_id = $cache->get("currency_id_".$currency_two->symbol.$currency_one->symbol);
+		if($currency_id == 0)
+			$cache->set("currency_id_".$currency_two->symbol.$currency_one->symbol, $currency_two->id);
+			
+		$api->depthCache([$currency_two->symbol.$currency_one->symbol], function($api, $symbol, $depth) {
+
+				$enter_at = 67;
+				$enter_previous_at = 55;
+				$exit_at = 50;
+
+				$cache = \Yii::$app->cache;
+				$current_currency_to_buy = $cache->get("current_currency_to_buy");
+				$currency_id = $cache->get("currency_id_".$symbol);
+				
+				$last_prediction = $cache->get("statistic_".$symbol);
+				$last_percent_prediction = $last_prediction['prediction'];
+				
+				if($current_currency_to_buy != $currency_id AND $current_currency_to_buy!=null)
+					return false;
+				
+				$prediction = Diviner::depthPrediction($depth['asks'], $depth['bids'], $symbol, $currency_id);
+
+				$limit = 11;
+				$sorted = $api->sortDepth($symbol, $limit);
+				
+				// debug 
+				echo $prediction['prediction'].' '. (int)$current_currency_to_buy . ' '.$last_percent_prediction."\r\n";
+				
+				if($prediction['prediction'] > $enter_at AND $current_currency_to_buy == 0 AND $last_percent_prediction > $enter_previous_at) {
+					// store currenct currency as currency in buy
+					$cache->set("current_currency_to_buy", $currency_id);
+										
+					// purchase currency by id $currency_id;
+					// code of purchs must be here
+				}
+				
+				if($prediction['prediction'] < $exit_at AND $current_currency_to_buy == $currency_id) {
+					// sell currency by id $currency_id
+					// code of sell must be here
+					
+					// and after this - clear cache data
+					$cache->set("current_currency_to_buy", 0);
+				}
+				
+				if(date("s",time())==59) {
+					$endpoint = strtolower( $symbol ) . '@depthCache';
+					$api->terminate( $endpoint );
+				}
+		});
+	}
 }
 
 
