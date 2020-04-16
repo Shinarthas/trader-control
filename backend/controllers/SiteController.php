@@ -121,14 +121,54 @@ class SiteController extends Controller
         foreach ($markets as $market){
             $markets_remaped[$market->id]=$market;
         }
+        if(isset($get['percent_drop']))
+            $percent_drop=$get['percent_drop'];
+        else
+            $percent_drop='0.006';
+
+        if(isset($get['date_start']))
+            $date_start=$get['date_start'];
+        else
+            $date_start='2019-01-01';
+
+        $date_end=date('Y-m-d', strtotime($date_start . ' +1 month'));
+
+
+        if(isset($get['percent_bounce']))
+            $percent_bounce=$get['percent_bounce'];
+        else
+            $percent_bounce='0.001';
+
+        if(isset($get['percent_profit']))
+            $percent_profit=$get['percent_profit'];
+        else
+            $percent_profit='0.004';
+        if(isset($get['timeout']))
+            $timeout=$get['timeout'];
+        else
+            $timeout=3*24*3600;
         $forecasts=ApiRequest::statistics('v1/forecast/list',['limit'=>100]);
         $fakes=ApiRequest::statistics('v1/orders/fake',['limit'=>100]);
+
+        $data=ApiRequest::statistics('v1/trader2/graphic',['symbol'=>"BTCUSDT",'date_start'=>'2020-01-01','date_end'=>date("Y-m-d",time()),'timeframe'=>'1d']);
+        $data=json_decode(json_encode($data->data),true);
+
+        $forecast_statistics=ApiRequest::statistics('v1/forecast/statistics-day',[]);
 
 
         return $this->render('releases', [
             'orders'=>$fakes->data,
+            'pair'=>"BTCUSDT",
+            'percent_drop'=>$percent_drop,
+            'percent_bounce'=>$percent_bounce,
+            'percent_profit'=>$percent_profit,
+            'timeout'=>$timeout,
+            'date_start'=>$date_start,
+            'date_end'=>$date_end,
             'markets'=>$markets_remaped,
             'forecasts'=>$forecasts->data,
+            'data'=>$data,
+            'forecast_statistics'=>$forecast_statistics->data
         ]);
     }
 	

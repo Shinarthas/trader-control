@@ -62,10 +62,10 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
     var percent_profit=parseFloat(<?= $percent_profit ?>);
     var timeout=parseFloat(<?= $timeout ?>);
     window.onload = function () {
-        var gaps=[1,2,3,4,6,8,12,24]
+        var gaps=[1,2,3,4,6,8,12,24,48,96,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,2000]
             var gData=[];
         for (const [key, value] of Object.entries(data)) {
-            gData.push({x:key/1000,y:parseFloat(value.open)})
+            gData.push({x:new Date(key/1),y:parseFloat(value.open)})
         }
         var totalData=[
             {
@@ -83,16 +83,16 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                     continue;
                 var time1=gData[i-j].y;
                 for(var k=j;k<gaps.length;k++){
-                    if (typeof gData[i-j-k]=== 'undefined')
+                    if (typeof gData[i-k]=== 'undefined')
                         continue;
-                    var time2=gData[i-j-k].y;
+                    var time2=gData[i-k].y;
                     if((time2-time1)/time1>percent_drop && (bid_now-time1)/time1>percent_bounce){
                         //начинаем просчет
                         var strategyStart=[];
 
 
                         //тут показываем как зашли
-                        for (var ii=i-j-k; ii<i;ii++){
+                        for (var ii=i-k; ii<i;ii++){
                             strategyStart.push(gData[ii])
                         }
                         totalData.push({
@@ -144,10 +144,26 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                             order.rate_start=value_start;
                             order.rate_end=value_current;
                             order.usdt_bank=100000;
-                            order.profit=(100000/value_start*value_current)-100000;
+                            order.profit=(100000/value_start*value_current)-100000*1.004;
                             orders.push(order);
                         }else{
                             var color='#fb564c';
+
+                            totalData.push({
+                                color:color,
+                                type: "line", //change it to line, area, column, pie, etc
+                                dataPoints: strategyProcess
+                            })
+                            //создаем ордер
+                            var order={};
+                            order.pair=pair;
+                            order.date_start=gData[i].x;
+                            order.date_end=gData[ii_global].x;
+                            order.rate_start=value_start;
+                            order.rate_end=value_current;
+                            order.usdt_bank=100000;
+                            order.profit=(100000/value_start*value_current)-100000*1.004;
+                            orders.push(order);
                         }
 
                         //i=parseInt((i+ii_global)/2);//нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
@@ -169,6 +185,10 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 title: {
                     text: pair
                 },
+                axisX:{
+                    valueFormatString: "DD-MMM" ,
+                    labelAngle: -50
+                },
                 axisY: {
                     // title: "If you need",
                     // suffix: "K",
@@ -184,11 +204,12 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         var profit=0;
         $.each(orders, function (key, val) {
             profit+=val.profit;
+
             var o="<div class='order'>" +
                 "<div class='col-md-2'>"+val.pair+"</div>" +
-                "<div class='col-md-2'>"+timeConverter(val.date_start)+"</div>" +
+                "<div class='col-md-2'>"+timeConverter(val.date_start.getTime()/1000)+"</div>" +
                 "<div class='col-md-2'>"+val.rate_start+" -->  "+val.rate_end+"</div>" +
-                "<div class='col-md-2'>"+timeConverter(val.date_end)+"</div>" +
+                "<div class='col-md-2'>"+timeConverter(val.date_end.getTime()/1000)+"</div>" +
                 //"<div class='col-md-2'>$"+val.usdt_bank+"</div>" +
                 "<div class='col-md-2'>"+val.profit.toFixed(2)+"</div>" +
                 "<div class='col-md-2'>"+(val.profit.toFixed(2)/val.usdt_bank*100).toFixed(2)+"%</div>" +
@@ -198,7 +219,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
         $('.profit-value').text('$'+profit.toFixed(2));
     }
     function timeConverter(UNIX_timestamp){
-        return UNIX_timestamp;
+
         var a = new Date(UNIX_timestamp * 1000);
         var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
         var year = a.getFullYear();

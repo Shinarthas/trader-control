@@ -102,58 +102,10 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                     <div class="col-xs-6"><i class="fa fa-cog"></i><?= $order_statistics['hour']['bot'] ?></div>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <?php echo $profit_statistics['week']['profitable_orders']."/".$profit_statistics['week']['total_orders'] ?>
-                    <?php $number=number_format(
-                        $balance_statistics['now']/$balance_statistics['week']*100-100
-                        ,2);
-                    $color=$number>0?'#00a300':'red'
-                    ?>
-                    <span style="color: <?=$color?>">
-                        <?= $number ?>%</span></td>
-                <td>
-                    <?php echo $profit_statistics['day']['profitable_orders']."/".$profit_statistics['day']['total_orders'] ?>
-                    <?php $number=number_format(
-                        $balance_statistics['now']/$balance_statistics['day']*100-100
-                        ,2);
-                    $color=$number>0?'#00a300':'red'
-                    ?>
-                    <span style="color: <?=$color?>">
-                        <?= $number ?>%
-                    </span></td>
-                <td>
-                    <?php echo $profit_statistics['hour']['profitable_orders']."/".$profit_statistics['hour']['total_orders'] ?>
-                    <?php $number=number_format(
-                        $balance_statistics['now']/$balance_statistics['hour']*100-100
-                        ,2);
-                    $color=$number>0?'#00a300':'red'
-                    ?>
-                    <span style="color:  <?=$color?>">
-                        <?= $number ?>%
-                    </span></td>
-            </tr>
-            <tr>
-                <?php
-                $number=number_format($balance_statistics['now']-$balance_statistics['week'],2);
-                $color=$number>0?'#00a300':'red'
-                ?>
-                <td style="color: <?= $color ?>;"><?= $number ?></td>
-                <?php
-                $number=number_format($balance_statistics['now']-$balance_statistics['day'],2);
-                $color=$number>0?'#00a300':'red'
-                ?>
-                <td style="color: <?= $color ?>;"><?= $number ?></td>
-                <?php
-                $number=number_format($balance_statistics['now']-$balance_statistics['hour'],2);
-                $color=$number>0?'#00a300':'red'
-                ?>
-                <td style="color: <?= $color ?>;"><?= $number ?></td>
-            </tr>
         </table>
         <div class="row currency_wrapper">
             <?php foreach ($trading_pairs as $pair){ ?>
-                <?php if($pair->statistics->data->{'5min'}->bid==0){continue;}?>
+
                 <div class="col-md-6 currency currency-<?= $pair->trading_paid; ?>">
                     <div class="panel panel-default">
                         <div class="panel-body <?= $pair->trading_paid; ?>-panel">
@@ -315,19 +267,26 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 </style>
 <script>
     var trading_pairs=<?= json_encode($trading_pairs)?>;
+
     var balances=<?= json_encode($balances[0]->balances)?>;
 </script>
 <script>
     window.onload = function () {
         for(var i=0;i<trading_pairs.length;i++){
             var pair=trading_pairs[i];
+            var dp=[];
+            for(var j=0;j< pair.statistics.data.length-10;j+=10){
+                dp.push({x:new Date(pair.statistics.data[j].created_at),y:pair.statistics.data[j].ask})
+            }
+            console.log(dp);
             var options = {
                 theme: "dark1",
                 title: {
                     text: pair.trading_paid
                 },
                 axisX:{
-                    interval: 10,
+                    valueFormatString: "HH:ii" ,
+                    labelAngle: -50
                 },
                 axisY: {
                     // title: "If you need",
@@ -339,18 +298,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 data: [
                     {
                         type: "spline", //change it to line, area, column, pie, etc
-                        dataPoints: [
-                            //{ x: 0, y:  pair.statistics.data['240min'].ask},
-                            //{ x: 120, y:  pair.statistics.data['120min'].ask},
-                            //{ x: 180, y:  pair.statistics.data['60min'].ask},
-                            { x: 200, y:  pair.statistics.data['40min'].ask},
-                            { x: 210, y:  pair.statistics.data['30min'].ask},
-                            { x: 220, y:  pair.statistics.data['20min'].ask},
-                            { x: 225, y:  pair.statistics.data['15min'].ask},
-                            { x: 230, y:  pair.statistics.data['10min'].ask},
-                            { x: 235, y:  pair.statistics.data['5min'].ask },
-                            { x: 240, y: pair.statistics.data['now'].ask },
-                        ]
+                        dataPoints: dp
                     }
                 ]
             };
@@ -358,6 +306,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
                 $("."+pair.trading_paid+"-panel").find('.chart').CanvasJSChart(options);
         }
         var dd=[];
+        console.log(balances);
         for (const [key, value] of Object.entries(balances)) {
             dd.push({y:value.value,label:key})
         }
@@ -406,6 +355,7 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
             url : url,
             data : {'accounts':accounts}
         }).done(function(data) {
+            alert(data);
             //console.log(data)
             //location=location;
         }).fail(function() {

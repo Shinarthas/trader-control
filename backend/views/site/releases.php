@@ -17,6 +17,80 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 <script src="https://darsa.in/sly/js/sly.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/0.5.7/chartjs-plugin-annotation.min.js"
         integrity="sha256-Olnajf3o9kfkFGloISwP1TslJiWUDd7IYmfC+GdCKd4=" crossorigin="anonymous"></script>
+
+<script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh" crossorigin="anonymous"></script>
+<script src="https://canvasjs.com/assets/script/jquery.canvasjs.min.js"></script>
+
+
+<h2>Possibility</h2>
+<div class="main-chart" style="min-height: 400px">
+
+</div>
+
+<h2>Таблица над таблицей</h2>
+<div class="row">
+    <table class="table">
+        <thead>
+        <tr>
+            <td>колонка1</td>
+            <td>колонка1</td>
+            <td>колонка1</td>
+            <td>колонка1 %</td>
+            <td>колонка1 %</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>2020-01-1 - 2020-03-20</td>
+            <td>ustd +
+                btc +
+                BNB +
+                etx +
+                trx +
+            </td>
+            <td>колонка1</td>
+            <td>колонка1 %</td>
+            <td>колонка1 %</td>
+        </tr><tr>
+            <td>колонка1</td>
+            <td>колонка1</td>
+            <td>колонка1</td>
+            <td>колонка1 %</td>
+            <td>колонка1 %</td>
+        </tr><tr>
+            <td>колонка1</td>
+            <td>колонка1</td>
+            <td>колонка1</td>
+            <td>колонка1 %</td>
+            <td>колонка1 %</td>
+        </tr><tr>
+            <td>колонка1</td>
+            <td>колонка1</td>
+            <td>колонка1</td>
+            <td>колонка1 %</td>
+            <td>колонка1 %</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+<h2>Profits</h2>
+<div class="row">
+    <table class="table profit-table">
+        <thead>
+        <tr>
+            <td>action</td>
+            <td>day</td>
+            <td>symbol</td>
+            <td>twitch %</td>
+            <td>profit %</td>
+        </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+
 <h2>Trading Statistics</h2>
 <canvas id="canvas"></canvas>
 <h2>Profit Statistics</h2>
@@ -417,6 +491,253 @@ $this->registerAssetBundle(yii\web\JqueryAsset::className(), View::POS_HEAD);
 <br>
 <br>
 <div style="height: 100px"></div>
+<script>
+    var data=<?= json_encode($data) ?>;
+    var forecast_statistics=<?= json_encode($forecast_statistics) ?>;
+    var pair="BTCUSDT";
+    var orders=[];//наши ордера
+    var percent_drop=parseFloat(<?= $percent_drop ?>);
+    var percent_bounce=parseFloat(<?= $percent_bounce ?>);
+    var percent_profit=parseFloat(<?= $percent_profit ?>);
+    var timeout=parseFloat(<?= $timeout ?>);
+
+    $(function() {
+        var torgi=[]
+        var torgi_tmp=[]
+        var gaps=[1,2,3,4,6,8,12,24]
+        var gData=[];
+        var tmp=undefined;
+
+        var value_before=0;//для таблицы профитов
+        var iterations=0;//для таблицы профитов
+            for (const [key, value] of Object.entries(data)) {
+
+            gData.push({x:new Date(key/1),y:parseFloat(value.open)})
+
+            if(iterations>0){
+                var date=new Date(key/1);
+                if(forecast_statistics[date.toISOString().slice(0,10)]){//если мы в этот день торговали
+                    var push_date=new Date(key/1)
+                    //делаем масив торгов
+                    //каждый элемент это серия дней
+                    if(torgi_tmp.length){
+                        if(Math.abs(torgi_tmp[torgi_tmp.length-1].x-push_date)>86400000){//если разрыв больше дня то добавим его как отдельную серию
+                            torgi.push(torgi_tmp);
+                            torgi_tmp=[];
+                        }
+
+                    }
+                    torgi_tmp.push({x:push_date,y:parseFloat(value.open),flag:true});
+
+
+                }
+
+                var tmp_html='<tr data_date="'+date.toISOString().slice(0,10)+'"><td></td><td>'+date.toISOString().slice(0,10)+'</td><td></td><td>'+((value.open/value_before.open-1)*100).toFixed(2)+'%</td><td></td><tr>'
+                $('.profit-table tbody').append(tmp_html)
+            }
+            value_before=value;
+            iterations++;
+        }
+        //если в конце еще остались торги то добавим и их, добавляем последнюю серию торгов
+        if(torgi_tmp.length){
+            torgi.push(torgi_tmp);
+            torgi_tmp=[];
+        }
+        var totalData=[
+            {
+                showInLegend: true,
+                type: "line", //change it to line, area, column, pie, etc
+                dataPoints: gData,
+            },
+        ];
+        for(var lol=0;lol<torgi.length;lol++){
+            totalData.push({
+                color:'#cccccc',
+                type: "line", //change it to line, area, column, pie, etc
+                dataPoints: torgi[lol],
+            });
+        }
+        for (var i=0;i<gData.length-timeout/600-1;i++){
+            if(totalData.length>100*10)
+                break;
+            var bid_now=gData[i].y;
+            for (var j=0;j<gaps.length;j++){
+                if (typeof gData[i-j]=== 'undefined')
+                    continue;
+                var time1=gData[i-j].y;
+                for(var k=j;k<gaps.length;k++){
+                    if (typeof gData[i-j-k]=== 'undefined')
+                        continue;
+                    var time2=gData[i-j-k].y;
+                    if((time2-time1)/time1>percent_drop && (bid_now-time1)/time1>percent_bounce){
+                        //начинаем просчет
+                        var strategyStart=[];
+
+
+                        //тут показываем как зашли
+                        for (var ii=i-j-k; ii<i;ii++){
+                            strategyStart.push(gData[ii])
+                        }
+                        totalData.push({
+                            color:'#cccccc',
+                            type: "line", //change it to line, area, column, pie, etc
+                            dataPoints: strategyStart
+                        })
+
+                        //тут показываем как играли и создаем ордер
+                        var value_start=gData[i].y;//по какому курсу зашли
+                        var value_current=gData[i].y;//это какой курс сейчас, в момент интерации
+                        var strategyProcess=[];
+                        var ending_point=i;
+                        var ii_global=0;//мне это нужно знать, чтобы сказать когдая вышел из ставки, тут возможен баг
+                        //когда  ставки игралась еще и еще но мы не отображаем это
+                        for (var ii=i;ii<gData.length-1;ii++){// так как графики 5 мин, то разделим
+                            if(ii>i+timeout/600){
+                                console.log('break',ii,i,i+timeout/600+10)
+                                break;
+                            }
+
+                            ii_global=ii;
+                            ending_point=ii;
+                            //if(typeof gData[ii].y=='undefined'){
+
+                            //console.log(ii,gData[ii],i,gData.length );
+
+                            value_current=gData[ii].y;
+                            strategyProcess.push(gData[ii]);
+                            if(value_current>value_start*(1+percent_profit))
+                                break;//типо сработала ставка
+                        }
+                        //выберем цвет для графика в зависимосит от того выиграли  или проиграли
+                        if(value_current>value_start){
+
+                            var color='#4fcc37';
+
+
+                            totalData.push({
+                                color:color,
+                                type: "line", //change it to line, area, column, pie, etc
+                                dataPoints: strategyProcess
+                            })
+                            //создаем ордер
+                            var order={};
+                            order.pair=pair;
+                            order.date_start=gData[i].x;
+                            order.date_end=gData[ii_global].x;
+                            order.rate_start=value_start;
+                            order.rate_end=value_current;
+                            order.usdt_bank=100000;
+                            order.profit=(100000/value_start*value_current)-100000;
+                            orders.push(order);
+                        }else{
+                            var color='#fb564c';
+                        }
+
+                        //i=parseInt((i+ii_global)/2);//нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
+                        i=ii_global;//нужнно подвинуть  цикл, так как мы уже сделали нашу стратегию
+                        //тут возможен баг описанный выше
+                    }
+                }
+            }
+
+        }
+//        $.each(forecast_statistics, function (date, forecasts_stat) {
+//            var total=0;
+//            $.each(forecasts_stat, function (index, $f) {
+//                var tmp_html='<tr style="display: none" class="forecast" data_date_forecast="'+date+'"><td></td><td>'+date+'</td><td>'+$f['symbol']+'</td><td></td><td>'+(($f['profit'])).toFixed(2)+'%</td><tr>'
+//                $( "[data_date='"+date+"']" ).after(tmp_html)
+//                total+=$f['profit'];
+//            });
+//            $( "[data_date='"+date+"']" ).find('td').eq(4).html(total.toFixed(2)+'%')
+//            $( "[data_date='"+date+"']" ).find('td').eq(0).html('<i class="fa fa-caret-right" onclick="toggleForecasts();"></i>')
+//        });
+
+
+        var options = {
+
+            toolTip:{
+                shared: true,
+//                content: function (e) {
+//                    return "aaa";
+//                }
+            },
+            zoomEnabled: true,
+            title: {
+                text: pair
+            },
+            axisX:{
+                valueFormatString: "DD-MMM" ,
+                labelAngle: -50
+            },
+            axisY: {
+                // title: "If you need",
+                // suffix: "K",
+                includeZero: false
+            },
+            //animationEnabled: true,
+            //exportEnabled: true,
+            data: totalData
+        };
+        var chart = $(".main-chart").CanvasJSChart(options);
+
+        //добавляем ордера
+        var profit=0;
+        $.each(orders, function (key, val) {
+            profit+=val.profit;
+            var o="<div class='order'>" +
+                "<div class='col-md-2'>"+val.pair+"</div>" +
+                "<div class='col-md-2'>"+timeConverter(val.date_start)+"</div>" +
+                "<div class='col-md-2'>"+val.rate_start+" -->  "+val.rate_end+"</div>" +
+                "<div class='col-md-2'>"+timeConverter(val.date_end)+"</div>" +
+                //"<div class='col-md-2'>$"+val.usdt_bank+"</div>" +
+                "<div class='col-md-2'>"+val.profit.toFixed(2)+"</div>" +
+                "<div class='col-md-2'>"+(val.profit.toFixed(2)/val.usdt_bank*100).toFixed(2)+"%</div>" +
+                "</div>";
+            $('.orders').append(o)
+        });
+        $('.profit-value').text('$'+profit.toFixed(2));
+
+
+        $.each(forecast_statistics, function (date, forecasts_stat) {
+            var total=0;
+            $.each(forecasts_stat, function (index, $f) {
+                var tmp_html='<tr style="display: none" class="forecast" data_date_forecast="'+date+'"><td></td><td>'+date+'</td><td>'+$f['symbol']+'</td><td></td><td>'+(($f['profit'])).toFixed(2)+'%</td><tr>'
+                $( "[data_date='"+date+"']" ).after(tmp_html)
+                total+=$f['profit'];
+            });
+            $( "[data_date='"+date+"']" ).find('td').eq(4).html(total.toFixed(2)+'%')
+            $( "[data_date='"+date+"']" ).find('td').eq(0).html('<i class="fa fa-caret-right" onclick="toggleForecasts();"></i>')
+        });
+
+    });
+
+    function timeConverter(UNIX_timestamp){
+        return UNIX_timestamp;
+        var a = new Date(UNIX_timestamp * 1000);
+        var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var year = a.getFullYear();
+        var month = months[a.getMonth()];
+        var date = a.getDate();
+        var hour = a.getHours();
+        var min = a.getMinutes();
+        //var sec = a.getSeconds();
+        var sec = '00';
+        if(hour<10)
+            hour='0'+hour;
+        if(min<10)
+            min='0'+min;
+        var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+        return time;
+    }
+    function toggleForecasts(){
+        var tr=$(event.srcElement).parents('tr')
+        var date=$(tr).attr('data_date');
+        var forecasts=$('.forecast[data_date_forecast="'+date+'"]')
+        console.log(forecasts)
+        forecasts.toggle()
+
+    }
+</script>
 <script>
 
 

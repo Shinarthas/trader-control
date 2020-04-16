@@ -258,8 +258,8 @@ class PromotionController extends Controller
                     $sell_task->currency_one=$task->currency_one;
                     $sell_task->currency_two=$task->currency_two;
 
-                    $sell_task->start_rate=$trading_pair->statistics->{'now'}->bid;
-                    $sell_task->rate=$trading_pair->statistics->{'now'}->ask*0.9;
+                    $sell_task->start_rate=$trading_pair->statistics[0]->bid;
+                    $sell_task->rate=$trading_pair->statistics[0]->ask*0.9;
 
                     $sell_task->tokens_count=$task->tokens_count;
                     $sell_task->random_curve=0;

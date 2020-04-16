@@ -38,14 +38,11 @@ class Trader2Controller extends Controller
 	}
 
 	public function actionIndex(){
-        $currency_to_usdt=ApiRequest::statistics('v1/currency/usdt-rates');
-        $currency_to_usdt_remapped=[];
-        foreach ($currency_to_usdt->data->rates as $usdt_rate){
-            $currency_to_usdt_remapped[$usdt_rate->currency]=$usdt_rate;
-        }
-
-
         $time_start = microtime(true);
+        $currency_to_usdt=ApiRequest::statistics('v1/currency/usdt-rates');
+
+
+
         $trading_pairs=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'limit'=>10]);
         $trading_pairs=$trading_pairs->data;
         $period=Trading::getPeriod();
@@ -61,7 +58,7 @@ class Trader2Controller extends Controller
             $trading_pairs_remapped[$trading_pair->trading_paid]=$trading_pair;
         }
         $time_end = microtime(true);
-        $execution_time = ($time_end - $time_start);
+        //echo ($time_end - $time_start).'stat <br/>';
         //echo $execution_time; die();
         //фунуионал статистики по ордерам
         $time=time();
@@ -141,16 +138,13 @@ class Trader2Controller extends Controller
             }
         }
 
-        $balance_statistics_data=ApiRequest::statistics('v1/account/balances-per-time',[
-            'intervals'=>[$time-24*3600*7,$time-24*3600,$time-3600,$time]
-        ]);
-        $balance_statistics=[
-            'week'=>$balance_statistics_data->data->{$time-24*3600*7},
-            'day'=>$balance_statistics_data->data->{$time-24*3600},
-            'hour'=>$balance_statistics_data->data->{$time-3600},
-            'now'=>$balance_statistics_data->data->{$time},
-        ];
 
+        $time_end = microtime(true);
+        //echo ($time_end - $time_start).'balances <br/>';
+
+
+        $time_end = microtime(true);
+        //echo ($time_end - $time_start).'tradingpairs <br/>';
         $trading_pairs2=ApiRequest::statistics('v1/trader2/list',['rating'=>1,'limit'=>10]);
         $trading_pairs2=$trading_pairs2->data;
 
@@ -173,7 +167,8 @@ class Trader2Controller extends Controller
 
         $trading_pairs_remapped['BTCUSDT']=json_decode(json_encode(['ass'=>'ass']));
         $trading_pairs_remapped['BTCUSDT']->statistics=ApiRequest::statistics('v1/trader2/graphic',['symbol'=>'BTCUSDT','date_start'=>date('Y-m-d H:i:s',(time()-3600*24*2)),'date_end'=>date('Y-m-d H:i:s',(time())),'limit'=>999])->data;
-
+        $time_end = microtime(true);
+        //echo ($time_end - $time_start).'$trading_pairs_remapped <br/>';
         $profit_statistics=[
             'week'=>['total_orders'=>0,'profitable_orders'=>0,'profit'=>0],
             'day'=>['total_orders'=>0,'profitable_orders'=>0,'profit'=>0],
@@ -244,7 +239,8 @@ class Trader2Controller extends Controller
 
         }
 
-
+        $time_end = microtime(true);
+        //echo ($time_end - $time_start).'statistics <br/>';
 
 	   $Companies=Campaign::find()->all();
         return $this->render("index", [
@@ -254,10 +250,12 @@ class Trader2Controller extends Controller
             'period'=>$period,
             'trading_pairs_remapped'=>$trading_pairs_remapped,
             'order_statistics'=>$order_statistics,
-            'balance_statistics'=>$balance_statistics,
+
             'profit_statistics'=>$profit_statistics,
-            'usdt_rates'=>$currency_to_usdt_remapped,
+
         ]);
+        $time_end = microtime(true);
+        //echo ($time_end - $time_start).'view <br/>';
     }
 
     public function actionOrders($id){
